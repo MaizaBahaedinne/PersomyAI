@@ -54,6 +54,17 @@ export function DashboardView() {
         </div>
       </section>
 
+      <section aria-label={t("dashboard.orchestration")}>
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">{t("dashboard.orchestration")}</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <StatCard label={t("dashboard.missions_open")} value={s.missions.open} />
+          <StatCard label={t("dashboard.tasks_awaiting")} value={s.tasks.awaiting_approval} />
+          <StatCard label={t("dashboard.tasks_open")} value={s.tasks.open} />
+          <StatCard label={t("dashboard.tasks_done")} value={s.tasks.done} />
+          <StatCard label={t("dashboard.tasks_failed")} value={s.tasks.failed} />
+        </div>
+      </section>
+
       <section aria-label={t("dashboard.modules")}>
         <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-400">{t("dashboard.modules")}</h2>
         <div className="grid gap-4 sm:grid-cols-3">

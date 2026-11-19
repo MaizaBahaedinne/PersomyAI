@@ -22,6 +22,10 @@ class Permission(str, Enum):
     AGENTS_WRITE = "agents:write"  # créer, modifier, changer le statut, arrêt d'urgence
     AGENTS_GRANT = "agents:grant"  # permissions, outils, autonomie, levée d'arrêt d'urgence, révocation
     AGENTS_DELETE = "agents:delete"
+    ORCHESTRATION_READ = "orchestration:read"
+    ORCHESTRATION_WRITE = "orchestration:write"  # missions et tâches : créer, modifier, affecter, annuler
+    ORCHESTRATION_APPROVE = "orchestration:approve"  # valider ou rejeter une tâche sensible
+    ORCHESTRATION_RUN = "orchestration:run"  # lancer l'exécution d'une tâche
 
 
 _ALL = set(Permission)
@@ -37,12 +41,17 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.SESSIONS_REVOKE,
         Permission.AGENTS_READ,
         Permission.AGENTS_WRITE,
+        Permission.ORCHESTRATION_READ,
+        Permission.ORCHESTRATION_WRITE,
+        Permission.ORCHESTRATION_APPROVE,
+        Permission.ORCHESTRATION_RUN,
     },
     Role.OPERATOR: {
         Permission.DASHBOARD_READ,
         Permission.USERS_READ,
         Permission.SETTINGS_READ,
         Permission.AGENTS_READ,
+        Permission.ORCHESTRATION_READ,
     },
     Role.VIEWER: {Permission.DASHBOARD_READ},
 }

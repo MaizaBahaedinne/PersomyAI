@@ -40,6 +40,8 @@ class SummaryOut(BaseModel):
     users: dict
     sessions: dict
     agents: dict
+    tasks: dict
+    missions: dict
     emergency_stop: bool
     security: dict
     recent_activity: list[EventBrief]

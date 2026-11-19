@@ -63,9 +63,20 @@ describe("AppShell (accès privés)", () => {
   it("signale les modules non développés comme « Bientôt »", () => {
     setAuth("authenticated", ["dashboard:read"]);
     renderWithI18n(<AppShell><p>x</p></AppShell>);
-    expect(screen.getAllByText("Bientôt").length).toBeGreaterThanOrEqual(7);
-    // Les agents sont développés : visibles seulement avec la permission, sans mention « Bientôt ».
+    expect(screen.getAllByText("Bientôt").length).toBeGreaterThanOrEqual(6);
+    // Agents, missions et tâches sont développés : visibles seulement avec la permission, sans mention « Bientôt ».
     expect(screen.queryByRole("link", { name: "Agents IA" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Missions" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Tâches" })).not.toBeInTheDocument();
+  });
+
+  it("affiche missions et tâches avec orchestration:read", () => {
+    setAuth("authenticated", ["dashboard:read", "orchestration:read"]);
+    renderWithI18n(<AppShell><p>x</p></AppShell>);
+    const missions = screen.getAllByRole("link", { name: "Missions" })[0];
+    expect(missions).toHaveAttribute("href", "/missions");
+    expect(missions).not.toHaveTextContent("Bientôt");
+    expect(screen.getAllByRole("link", { name: "Tâches" })[0]).toHaveAttribute("href", "/tasks");
   });
 
   it("affiche le module Agents IA avec la permission agents:read", () => {

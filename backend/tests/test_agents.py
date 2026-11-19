@@ -346,7 +346,7 @@ def test_dashboard_counts_agents_from_real_data(admin, sa):
     admin.post(f"{AGENTS}/{a['id']}/status", json={"status": "ACTIVE"})
     d = sa.get("/api/v1/dashboard/summary").json()
     assert d["agents"]["total"] == 2 and d["agents"]["active"] == 1 and d["agents"]["draft"] == 1
-    assert d["emergency_stop"] is False and d["pending_modules"] == ["missions", "automations"]
+    assert d["emergency_stop"] is False and d["pending_modules"] == ["automations"]
     admin.post(f"{AGENTS}/emergency-stop")
     d = sa.get("/api/v1/dashboard/summary").json()
     assert d["emergency_stop"] is True and d["agents"]["paused"] == 1

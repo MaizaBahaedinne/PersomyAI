@@ -69,7 +69,92 @@ export interface DashboardSummary {
   services: ServiceStatus[];
   pending_modules: string[];
   agents: AgentCounts;
+  tasks: TaskCounts;
+  missions: MissionCounts;
   emergency_stop: boolean;
+}
+
+export type TaskStatus =
+  | "OPEN"
+  | "AWAITING_APPROVAL"
+  | "APPROVED"
+  | "RUNNING"
+  | "DONE"
+  | "FAILED"
+  | "REJECTED"
+  | "CANCELLED";
+export type MissionStatus = "OPEN" | "DONE" | "CANCELLED";
+export type Priority = "LOW" | "NORMAL" | "HIGH";
+
+export interface TaskCounts {
+  open: number;
+  awaiting_approval: number;
+  approved: number;
+  running: number;
+  done: number;
+  failed: number;
+  rejected: number;
+  cancelled: number;
+  total: number;
+}
+
+export interface MissionCounts {
+  open: number;
+  done: number;
+  cancelled: number;
+  total: number;
+}
+
+export interface Mission {
+  id: string;
+  title: string;
+  description: string;
+  status: MissionStatus;
+  created_at: string;
+  updated_at: string;
+  task_counts: Partial<TaskCounts>;
+}
+
+export interface TaskSummary {
+  id: string;
+  title: string;
+  priority: Priority;
+  status: TaskStatus;
+  mission_id: string | null;
+  mission_title: string | null;
+  agent_id: string | null;
+  agent_name: string | null;
+  required_scope: string | null;
+  requires_approval: boolean | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Task extends TaskSummary {
+  description: string;
+  approval_requested_at: string | null;
+  decided_by_label: string | null;
+  decided_at: string | null;
+  decision_reason: string | null;
+}
+
+export interface TaskRun {
+  id: string;
+  status: "RUNNING" | "SUCCESS" | "FAILED";
+  provider: string;
+  output: string;
+  error_code: string | null;
+  cost_cents: number;
+  tokens_in: number;
+  tokens_out: number;
+  started_at: string;
+  finished_at: string | null;
+}
+
+export interface ProviderInfo {
+  name: string;
+  configured: boolean;
+  paid: boolean;
 }
 
 export type AgentStatus = "DRAFT" | "ACTIVE" | "PAUSED" | "ERROR" | "DISABLED";

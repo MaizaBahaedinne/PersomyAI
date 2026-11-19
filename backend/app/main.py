@@ -15,6 +15,7 @@ from app.modules.agents.router import router as agents_router
 from app.modules.audit.router import router as audit_router
 from app.modules.authentication.router import router as auth_router
 from app.modules.dashboard.router import router as dashboard_router
+from app.modules.orchestration.router import missions_router, tasks_router
 from app.modules.settings.router import router as settings_router
 from app.modules.users.router import router as users_router
 
@@ -76,7 +77,16 @@ def create_app() -> FastAPI:
             return JSONResponse(status_code=503, content={"status": "unavailable", "database": "down"})
         return {"status": "ok", "database": "ok"}
 
-    for router in (auth_router, users_router, audit_router, settings_router, dashboard_router, agents_router):
+    for router in (
+        auth_router,
+        users_router,
+        audit_router,
+        settings_router,
+        dashboard_router,
+        agents_router,
+        missions_router,
+        tasks_router,
+    ):
         app.include_router(router, prefix="/api/v1")
     return app
 

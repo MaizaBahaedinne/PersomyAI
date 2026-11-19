@@ -14,7 +14,8 @@ Plateforme de pilotage d'une entreprise gérée par deux administrateurs humains
 | Gestion des utilisateurs, paramètres généraux | Terminé et testé |
 | Centre de contrôle (données réelles : utilisateurs, sessions, sécurité, services) | Terminé et testé |
 | Agents IA (identités techniques, statuts, permissions, outils, historique, arrêt d'urgence) | Terminé et testé (gestion uniquement : aucun agent n'exécute encore de tâche ni n'appelle de modèle IA) |
-| Orchestrateur, automatisations, départements, CRM, finance, RH, analytics | Non implémenté (pages « en préparation », aucune donnée fictive) |
+| Orchestrateur (missions, tâches, validation humaine, interface fournisseur IA) | Développé et testé (tests automatisés) ; **aucun fournisseur IA réel n'existe** : l'exécution d'une tâche répond `provider_not_configured`, rien n'est simulé |
+| Automatisations, départements, CRM, finance, RH, analytics | Non implémenté (pages « en préparation », aucune donnée fictive) |
 | Authentification à deux facteurs | Architecture prévue (colonnes), non implémentée |
 | Déploiement VPS | Préparé (scripts), non exécuté : validation humaine requise |
 

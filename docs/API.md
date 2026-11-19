@@ -52,6 +52,32 @@ Préfixe `/api/v1/agents`. Les routes statiques sont déclarées avant `/{id}`.
 
 Codes d'erreur spécifiques : `agent_not_found` (404), `agent_name_taken`, `status_unchanged`, `invalid_transition`, `agent_incomplete`, `access_revoked`, `emergency_stop_active`, `agent_not_deletable` (409), `super_admin_required` (403).
 
+## Missions et tâches (orchestrateur)
+
+Préfixes `/api/v1/missions` et `/api/v1/tasks`. Les routes statiques (`/tasks/provider`) sont déclarées avant `/{id}`.
+
+| Méthode | Route | Permission |
+| --- | --- | --- |
+| GET | `/missions?search&status&limit&offset` | `orchestration:read` (chaque mission porte `task_counts`) |
+| POST | `/missions` | `orchestration:write` |
+| GET / PATCH | `/missions/{id}` | `orchestration:read` / `orchestration:write` (statuts OPEN, DONE, CANCELLED) |
+| GET | `/tasks/provider` | `orchestration:read` (`{name, configured, paid}`) |
+| GET | `/tasks?search&status&agent_id&mission_id&limit&offset` | `orchestration:read` |
+| POST | `/tasks` | `orchestration:write` (mission ouverte, agent non désactivé) |
+| GET / PATCH | `/tasks/{id}` | `orchestration:read` / `orchestration:write` (`agent_id` ou `required_scope` à `null` les retirent ; modifier le contenu d'une tâche en attente ou approuvée réinitialise la validation) |
+| POST | `/tasks/{id}/request-approval` | `orchestration:write` |
+| POST | `/tasks/{id}/approve` | `orchestration:approve` (corps facultatif `{comment}`) |
+| POST | `/tasks/{id}/reject` | `orchestration:approve` (corps `{reason}` obligatoire) |
+| POST | `/tasks/{id}/cancel` | `orchestration:write` (depuis OPEN, AWAITING_APPROVAL, APPROVED, FAILED, REJECTED) |
+| POST | `/tasks/{id}/reopen` | `orchestration:write` (FAILED, REJECTED, ou RUNNING bloquée depuis plus de 15 min) |
+| POST | `/tasks/{id}/run` | `orchestration:run` (répond `{task, run}`) |
+| GET | `/tasks/{id}/runs` | `orchestration:read` |
+| GET | `/tasks/{id}/history` | `orchestration:read` (audit de la tâche) |
+
+Statuts de tâche : OPEN, AWAITING_APPROVAL, APPROVED, RUNNING, DONE, FAILED, REJECTED, CANCELLED.
+
+Contrôles de `POST /tasks/{id}/run`, dans cet ordre (chaque refus est audité `task.run_blocked`, sans créer d'exécution) : `mission_not_open`, `agent_required`, `emergency_stop_active`, `agent_not_active` (inclut l'accès révoqué), `scope_not_granted`, `approval_required`, `provider_not_configured`, `daily_quota_exceeded`, `budget_exceeded` (409). Autres codes : `mission_not_found`, `task_not_found` (404), `agent_not_assignable`, `approval_not_required`, `invalid_task_state` (409), `self_approval_forbidden` (403).
+
 ## Autres
 
 | Méthode | Route | Permission |
@@ -65,6 +91,6 @@ Codes d'erreur spécifiques : `agent_not_found` (404), `agent_name_taken`, `stat
 | Rôle | Permissions |
 | --- | --- |
 | SUPER_ADMIN | toutes |
-| ADMIN | dashboard, users (lecture/écriture limitée aux rôles non privilégiés), audit, settings (lecture), révocation de sessions, agents (lecture/écriture, arrêt d'urgence) |
-| OPERATOR | dashboard, users (lecture), settings (lecture), agents (lecture) |
+| ADMIN | dashboard, users (lecture/écriture limitée aux rôles non privilégiés), audit, settings (lecture), révocation de sessions, agents (lecture/écriture, arrêt d'urgence), orchestration (lecture, écriture, validation, exécution) |
+| OPERATOR | dashboard, users (lecture), settings (lecture), agents (lecture), orchestration (lecture) |
 | VIEWER | dashboard |

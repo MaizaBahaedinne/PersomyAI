@@ -48,11 +48,11 @@ def test_dashboard_reflects_real_data(make_user, login, client):
     assert d["sessions"]["active"] == 1
     assert d["security"]["logins_failed_24h"] == 1
     assert d["security"]["logins_success_24h"] == 1
-    assert d["pending_modules"] == ["missions", "automations"]
+    assert d["pending_modules"] == ["automations"]
     assert d["agents"]["total"] == 0
+    assert d["tasks"]["total"] == 0 and d["missions"]["total"] == 0
     assert {s["name"]: s["status"] for s in d["services"]} == {"api": "ok", "database": "ok"}
     assert any(a["code"] == "single_super_admin" for a in d["alerts"])
-    assert "missions" not in d
 
 
 def test_dashboard_requires_auth(client):

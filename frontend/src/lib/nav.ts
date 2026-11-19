@@ -12,7 +12,8 @@ export const MAIN_NAV: NavItem[] = [{ href: "/dashboard", label: "nav.dashboard"
 /** Modules non développés : liés à une page « en préparation », jamais à de fausses données. */
 export const MODULE_NAV: NavItem[] = [
   { href: "/agents", label: "nav.agents", permission: "agents:read" },
-  { href: "/missions", label: "nav.missions", soon: true },
+  { href: "/missions", label: "nav.missions", permission: "orchestration:read" },
+  { href: "/tasks", label: "nav.tasks", permission: "orchestration:read" },
   { href: "/automations", label: "nav.automations", soon: true },
   { href: "/departments", label: "nav.departments", soon: true },
   { href: "/crm", label: "nav.crm", soon: true },

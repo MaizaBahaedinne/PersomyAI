@@ -27,6 +27,10 @@ class Settings(BaseSettings):
 
     password_min_length: int = 12
 
+    # Aucun fournisseur IA par défaut : tant qu'il est vide, aucun appel IA n'est possible.
+    ai_provider: str = ""
+    ai_timeout_seconds: int = 60
+
     @field_validator("trusted_origins", mode="before")
     @classmethod
     def _split_origins(cls, value):

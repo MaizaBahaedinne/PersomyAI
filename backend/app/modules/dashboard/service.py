@@ -8,11 +8,12 @@ from app.core.db import utcnow
 from app.modules.agents import service as agents_service
 from app.modules.audit.models import AuditEvent
 from app.modules.authentication.models import AuthSession
+from app.modules.orchestration import service as orchestration_service
 from app.modules.settings.service import get_settings_values
 from app.modules.users.models import User
 
 # Modules dont les données n'existent pas encore : jamais de chiffres fictifs.
-PENDING_MODULES = ["missions", "automations"]
+PENDING_MODULES = ["automations"]
 
 FAILED_LOGIN_ALERT_THRESHOLD = 10
 
@@ -73,6 +74,9 @@ def build_summary(db: Session) -> dict:
         alerts.append({"code": "emergency_stop_active", "severity": "warning", "count": 1})
     if agents["error"]:
         alerts.append({"code": "agents_in_error", "severity": "warning", "count": agents["error"]})
+    tasks = orchestration_service.task_counts(db)
+    if tasks["awaiting_approval"]:
+        alerts.append({"code": "tasks_awaiting_approval", "severity": "info", "count": tasks["awaiting_approval"]})
 
     recent = db.scalars(select(AuditEvent).order_by(AuditEvent.created_at.desc()).limit(10)).all()
     security_events = db.scalars(
@@ -89,6 +93,8 @@ def build_summary(db: Session) -> dict:
                   "super_admins": super_admins},
         "sessions": {"active": active_sessions},
         "agents": agents,
+        "tasks": tasks,
+        "missions": orchestration_service.mission_counts(db),
         "emergency_stop": emergency,
         "security": {
             "logins_success_24h": logins_ok,

@@ -19,6 +19,8 @@
 | Infrastructure | PostgreSQL non exposé ; conteneurs applicatifs non-root ; `.env` ignoré par git |
 | Agents IA | Identité technique (`agt_…`) sans compte, mot de passe ni session ; créés en DRAFT, autonomie 1, budget 0, aucune permission ni outil ; catalogue de permissions d'agent séparé des permissions humaines (aucune permission d'administration ni de paiement) ; permissions, outils, autonomie et budget réservés au `SUPER_ADMIN` ; configuration JSON refusant les clés de type secret ; révocation d'accès ; suppression limitée aux agents DRAFT/DISABLED ; chaque action auditée |
 | Arrêt d'urgence | Un `ADMIN` suspend tous les agents actifs et bloque toute activation ; seul un `SUPER_ADMIN` le lève ; état persisté en base (`system_settings`) et audité |
+| Orchestrateur | Validation humaine obligatoire si l'autonomie de l'agent est inférieure à 3 ou si la permission exigée est critique (`email:send`, `social:publish`, permission inconnue = critique) ; règle des quatre yeux pour les tâches critiques (l'approbateur ne peut être ni le créateur ni le demandeur) ; validation à usage unique, effacée par toute modification du contenu ; exécution refusée (et auditée) en cas d'arrêt d'urgence, d'agent non actif, de permission non accordée, de quota journalier dépassé (échecs comptés) ou de budget mensuel épuisé (fournisseurs payants) ; tâche réservée de façon atomique avant l'appel ; erreurs du fournisseur : seul le code est conservé ; l'audit ne contient ni consigne ni résultat |
+| Fournisseur IA | Registre vide : aucun appel IA n'est possible tant qu'un fournisseur n'est pas implémenté et configuré (`AI_PROVIDER`) ; rien n'est simulé |
 
 ## Initialisation des administrateurs
 
@@ -37,7 +39,9 @@ Préparée : colonnes `users.two_factor_enabled` et `users.two_factor_secret_enc
 - Le chiffrement des futures clés API (fournisseurs IA) reste à concevoir.
 - Pas de rotation/archivage automatique du journal d'audit.
 - Pas de 2FA ni de politique de récupération de compte.
-- Les permissions d'agent sont enregistrées mais **pas encore appliquées** : aucun agent n'exécute d'action. L'application effective (validation humaine des permissions critiques, quotas, arrêt d'urgence côté exécution) est le périmètre de la phase 4.
+- Les permissions d'agent sont appliquées par l'orchestrateur au moment de l'exécution d'une tâche, mais aucun fournisseur IA réel n'existe : ces garde-fous sont testés avec un faux fournisseur de test uniquement, jamais avec un vrai modèle.
+- L'exécution est synchrone (délai `AI_TIMEOUT_SECONDS`) : une tâche RUNNING interrompue (arrêt du processus) reste bloquée jusqu'à sa réouverture manuelle après 15 minutes.
+- Les niveaux d'autonomie 1 et 2 ont aujourd'hui le même effet (validation requise) ; seul le niveau 3 permet l'exécution sans validation pour une permission non critique.
 
 ## Opérations soumises à validation humaine (cible)
 

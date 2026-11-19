@@ -43,6 +43,7 @@ def test_migrations_match_models(tmp_path, monkeypatch):
     tables = set(inspect(create_engine(url)).get_table_names())
     assert {"users", "auth_sessions", "login_attempts", "audit_events", "system_settings"} <= tables
     assert {"agents", "agent_permissions", "agent_tools"} <= tables
+    assert {"missions", "tasks", "task_runs"} <= tables
     command.check(cfg)  # échoue si les modèles divergent de la migration
     command.downgrade(cfg, "base")
     get_settings.cache_clear()

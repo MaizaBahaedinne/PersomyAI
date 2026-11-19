@@ -15,8 +15,20 @@ const summary = {
     { name: "api", status: "ok", latency_ms: null },
     { name: "database", status: "down", latency_ms: null },
   ],
-  pending_modules: ["missions", "automations"],
+  pending_modules: ["automations"],
   agents: { draft: 1, active: 3, paused: 2, error: 1, disabled: 0, total: 7 },
+  missions: { open: 2, done: 1, cancelled: 0, total: 3 },
+  tasks: {
+    open: 4,
+    awaiting_approval: 5,
+    approved: 0,
+    running: 0,
+    done: 6,
+    failed: 1,
+    rejected: 0,
+    cancelled: 0,
+    total: 16,
+  },
   emergency_stop: false,
 };
 
@@ -47,9 +59,18 @@ describe("DashboardView", () => {
   it("n'affiche aucun chiffre pour les modules non développés", async () => {
     fetchMock.mockResolvedValue(jsonResponse(summary));
     renderWithI18n(<DashboardView />);
-    const missions = (await screen.findByText("Missions")).parentElement!;
-    expect(missions).toHaveTextContent("En préparation");
-    expect(missions.textContent).not.toMatch(/\d/);
+    const automations = (await screen.findByText("Automatisations")).parentElement!;
+    expect(automations).toHaveTextContent("En préparation");
+    expect(automations.textContent).not.toMatch(/\d/);
+  });
+
+  it("affiche les compteurs réels des missions et tâches", async () => {
+    fetchMock.mockResolvedValue(jsonResponse(summary));
+    renderWithI18n(<DashboardView />);
+    expect((await screen.findByText("Tâches à valider")).parentElement).toHaveTextContent("5");
+    expect(screen.getByText("Missions ouvertes").parentElement).toHaveTextContent("2");
+    expect(screen.getByText("Tâches terminées").parentElement).toHaveTextContent("6");
+    expect(screen.getByText("Tâches en échec").parentElement).toHaveTextContent("1");
   });
 
   it("affiche les compteurs réels des agents", async () => {
