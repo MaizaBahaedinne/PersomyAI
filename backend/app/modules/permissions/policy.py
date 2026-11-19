@@ -1,0 +1,56 @@
+"""Rôles et permissions. Les permissions sont vérifiées côté serveur uniquement."""
+
+from enum import Enum
+
+
+class Role(str, Enum):
+    SUPER_ADMIN = "SUPER_ADMIN"
+    ADMIN = "ADMIN"
+    OPERATOR = "OPERATOR"
+    VIEWER = "VIEWER"
+
+
+class Permission(str, Enum):
+    DASHBOARD_READ = "dashboard:read"
+    USERS_READ = "users:read"
+    USERS_WRITE = "users:write"
+    AUDIT_READ = "audit:read"
+    SETTINGS_READ = "settings:read"
+    SETTINGS_WRITE = "settings:write"
+    SESSIONS_REVOKE = "sessions:revoke"
+    AGENTS_READ = "agents:read"
+    AGENTS_WRITE = "agents:write"  # créer, modifier, changer le statut, arrêt d'urgence
+    AGENTS_GRANT = "agents:grant"  # permissions, outils, autonomie, levée d'arrêt d'urgence, révocation
+    AGENTS_DELETE = "agents:delete"
+
+
+_ALL = set(Permission)
+
+ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
+    Role.SUPER_ADMIN: _ALL,
+    Role.ADMIN: {
+        Permission.DASHBOARD_READ,
+        Permission.USERS_READ,
+        Permission.USERS_WRITE,
+        Permission.AUDIT_READ,
+        Permission.SETTINGS_READ,
+        Permission.SESSIONS_REVOKE,
+        Permission.AGENTS_READ,
+        Permission.AGENTS_WRITE,
+    },
+    Role.OPERATOR: {
+        Permission.DASHBOARD_READ,
+        Permission.USERS_READ,
+        Permission.SETTINGS_READ,
+        Permission.AGENTS_READ,
+    },
+    Role.VIEWER: {Permission.DASHBOARD_READ},
+}
+
+
+def permissions_for(role: Role | str) -> set[Permission]:
+    return ROLE_PERMISSIONS.get(Role(role), set())
+
+
+def has_permission(role: Role | str, permission: Permission) -> bool:
+    return permission in permissions_for(role)
