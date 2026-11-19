@@ -1,7 +1,10 @@
 import os
 
+from cryptography.fernet import Fernet
+
 # Doit être positionné avant l'import de l'application.
 os.environ["APP_ENV"] = "test"
+os.environ["TWO_FACTOR_KEY"] = Fernet.generate_key().decode()
 os.environ["COOKIE_SECURE"] = "false"
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["TRUSTED_ORIGINS"] = "http://localhost:3000"

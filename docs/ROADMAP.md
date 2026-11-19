@@ -20,4 +20,4 @@ Légende : TERMINÉ ET TESTÉ · DÉVELOPPÉ MAIS NON TESTÉ · PARTIELLEMENT IM
 2. Exécuter la suite de tests contre PostgreSQL 17 (service Docker) et valider `docker compose config/build`.
 3. Phase 4 (suite) : implémenter un premier fournisseur IA réel (clés côté serveur chiffrées, jamais renvoyées au frontend) en l'enregistrant dans `providers._REGISTRY` ; exécution asynchrone (file de tâches) à la place de l'exécution synchrone actuelle ; distinguer les niveaux d'autonomie 1 et 2 (aujourd'hui identiques : validation requise sous le niveau 3).
 4. Départements : aujourd'hui un catalogue en code (`modules/departments/catalog.py`) ; table dédiée quand ils porteront des données propres.
-5. 2FA (TOTP) sur les comptes administrateurs.
+5. 2FA : TOTP et codes de secours développés (voir SECURITY.md). Reste à : la rendre obligatoire pour les administrateurs (aujourd'hui facultative), afficher un QR code, la vérifier sur PostgreSQL / VPS.

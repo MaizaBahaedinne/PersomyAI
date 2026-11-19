@@ -12,7 +12,7 @@ interface AuthValue {
   user: User | null;
   permissions: string[];
   can: (permission: string) => boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, otp?: string) => Promise<void>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
 }
@@ -56,8 +56,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refresh]);
 
   const login = useCallback(
-    async (email: string, password: string) => {
-      apply(await api<Me>("/auth/login", { method: "POST", body: { email, password } }));
+    async (email: string, password: string, otp?: string) => {
+      apply(await api<Me>("/auth/login", { method: "POST", body: otp ? { email, password, otp } : { email, password } }));
     },
     [apply],
   );

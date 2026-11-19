@@ -17,9 +17,38 @@ En cas de perte d'accès des deux administrateurs, créer un nouveau `SUPER_ADMI
 
 ```bash
 ./scripts/backup.sh   # backups/persomy-<horodatage>.dump (pg_dump -Fc), 14 dernières conservées
+DOCKER="sudo docker" ./scripts/backup.sh   # si l'utilisateur n'est pas dans le groupe docker
 ```
 
-À planifier (cron) et à copier hors du VPS. Les fichiers contiennent des données sensibles : permissions `600`, stockage chiffré recommandé.
+Le script écrit dans un fichier temporaire, vérifie l'archive (`pg_restore --list`) puis la valide : une sauvegarde incomplète n'est jamais conservée. Fichiers en `600`.
+
+### Planification (cron)
+
+Exemple, tous les jours à 03:15 (à adapter au chemin d'installation ; `sudo crontab -e` si Docker exige les droits root) :
+
+```cron
+15 3 * * * cd /opt/persomy-v2 && DOCKER=docker ./scripts/backup.sh >> /var/log/persomy-backup.log 2>&1
+```
+
+Cette ligne n'a jamais été exécutée sur le VPS : lancer le script à la main une première fois et vérifier le fichier créé avant de planifier. Copier ensuite `backups/` **hors du VPS** (les sauvegardes locales ne protègent pas d'une perte du serveur). Les fichiers contiennent des données sensibles : stockage chiffré recommandé. Sauvegarder aussi `.env`, en particulier `TWO_FACTOR_KEY`, séparément et hors du VPS.
+
+## Authentification à deux facteurs
+
+`TWO_FACTOR_KEY` doit être définie dans `.env` (clé Fernet) :
+
+```bash
+docker compose exec backend python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+```
+
+Recréer le conteneur backend après modification de `.env`. Chaque administrateur active ensuite la 2FA dans Paramètres > Sécurité.
+
+Appareil perdu, codes de secours épuisés, ou clé `TWO_FACTOR_KEY` changée :
+
+```bash
+docker compose exec backend python -m app.cli reset-2fa --email prenom@exemple.com
+```
+
+La commande désactive la 2FA du compte, supprime ses codes de secours, révoque ses sessions et l'écrit dans l'audit (`auth.2fa_reset`).
 
 ## Restauration
 

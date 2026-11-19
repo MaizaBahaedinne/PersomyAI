@@ -34,7 +34,7 @@ Règles transverses : routes minces, logique dans les services, erreurs centrali
 
 ## Base de données
 
-Migration `0001` : `users`, `auth_sessions`, `login_attempts`, `audit_events`, `system_settings`. Migration `0002` : `agents`, `agent_permissions` (clé composite agent/permission), `agent_tools`. Migration `0003` : `missions`, `tasks`, `task_runs`. Clés étrangères (`ON DELETE CASCADE` pour les sessions, `SET NULL` pour l'audit), index sur les colonnes filtrées, contraintes `CHECK` sur rôles et langues, horodatages UTC.
+Migration `0001` : `users`, `auth_sessions`, `login_attempts`, `audit_events`, `system_settings`. Migration `0002` : `agents`, `agent_permissions` (clé composite agent/permission), `agent_tools`. Migration `0003` : `missions`, `tasks`, `task_runs`. Migration `0004` : `users.two_factor_last_step` (anti-rejeu TOTP) et `recovery_codes` (empreintes SHA-256 des codes de secours, usage unique, `ON DELETE CASCADE`). Clés étrangères (`ON DELETE CASCADE` pour les sessions, `SET NULL` pour l'audit), index sur les colonnes filtrées, contraintes `CHECK` sur rôles et langues, horodatages UTC.
 
 Les migrations sont appliquées au démarrage du conteneur backend (`alembic upgrade head`). Elles sont additives ; toujours sauvegarder avant déploiement.
 

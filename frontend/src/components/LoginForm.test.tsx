@@ -31,7 +31,7 @@ describe("LoginForm", () => {
     fill("admin@example.com", "secret-password-1");
     fireEvent.click(screen.getByRole("button", { name: "Se connecter" }));
     await waitFor(() => expect(replace).toHaveBeenCalledWith("/dashboard"));
-    expect(login).toHaveBeenCalledWith("admin@example.com", "secret-password-1");
+    expect(login).toHaveBeenCalledWith("admin@example.com", "secret-password-1", undefined);
   });
 
   it("affiche un message générique pour des identifiants invalides et vide le mot de passe", async () => {
@@ -69,6 +69,33 @@ describe("LoginForm", () => {
     const button = await screen.findByRole("button", { name: "Connexion…" });
     expect(button).toBeDisabled();
     resolve();
+  });
+
+  it("demande le code de vérification puis renvoie identifiants et code", async () => {
+    login.mockRejectedValueOnce(new ApiError(401, "two_factor_required", "x"));
+    login.mockResolvedValueOnce(undefined);
+    renderWithI18n(<LoginForm />);
+    fill("admin@example.com", "secret-password-1");
+    fireEvent.click(screen.getByRole("button", { name: "Se connecter" }));
+    const otp = await screen.findByLabelText("Code de vérification");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Mot de passe")).toHaveValue("secret-password-1");
+    fireEvent.change(otp, { target: { value: " 123456 " } });
+    fireEvent.click(screen.getByRole("button", { name: "Se connecter" }));
+    await waitFor(() => expect(replace).toHaveBeenCalledWith("/dashboard"));
+    expect(login).toHaveBeenLastCalledWith("admin@example.com", "secret-password-1", "123456");
+  });
+
+  it("affiche une erreur pour un code de vérification incorrect", async () => {
+    login.mockRejectedValueOnce(new ApiError(401, "two_factor_required", "x"));
+    login.mockRejectedValueOnce(new ApiError(401, "invalid_otp", "x"));
+    renderWithI18n(<LoginForm />);
+    fill("admin@example.com", "secret-password-1");
+    fireEvent.click(screen.getByRole("button", { name: "Se connecter" }));
+    fireEvent.change(await screen.findByLabelText("Code de vérification"), { target: { value: "000000" } });
+    fireEvent.click(screen.getByRole("button", { name: "Se connecter" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Code de vérification incorrect.");
+    expect(replace).not.toHaveBeenCalled();
   });
 
   it("redirige si déjà authentifié", () => {

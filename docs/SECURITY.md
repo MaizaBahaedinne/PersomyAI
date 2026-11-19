@@ -28,7 +28,18 @@ Aucun mot de passe par défaut. Les comptes sont créés via la CLI interactive 
 
 ## Authentification à deux facteurs
 
-Préparée : colonnes `users.two_factor_enabled` et `users.two_factor_secret_encrypted`. Non implémentée ; ne pas considérer l'application comme protégée par 2FA.
+TOTP (RFC 6238 : SHA-1, 6 chiffres, 30 s, tolérance ±1 pas), implémenté avec la bibliothèque standard. Facultatif par compte : **non imposé**, un administrateur qui ne l'active pas n'est pas protégé.
+
+- Secret chiffré en base (Fernet) avec la clé `TWO_FACTOR_KEY` (variable d'environnement). Sans clé valide, la 2FA est indisponible (409 `two_factor_unavailable`) et rien n'est écrit en clair.
+- Activation en deux temps (mot de passe, puis code valide) ; l'activation révoque les autres sessions.
+- Anti-rejeu : un pas TOTP n'est accepté qu'une fois (mise à jour atomique de `users.two_factor_last_step`).
+- 10 codes de secours (`xxxxx-xxxxx`), stockés sous forme d'empreintes SHA-256, usage unique, affichés une seule fois, régénérables.
+- Un mauvais code compte comme un échec de connexion (anti force brute, 429). Un mauvais mot de passe ne révèle jamais l'existence de la 2FA.
+- Désactivation et régénération exigent mot de passe + code.
+- L'audit n'enregistre jamais le secret ni un code (`auth.2fa_setup`, `auth.2fa_enable`, `auth.2fa_disable`, `auth.2fa_recovery_regenerate`, `auth.2fa_reset`, `second_factor` dans `auth.login`).
+- Appareil perdu ou clé `TWO_FACTOR_KEY` changée : `python -m app.cli reset-2fa --email …` (accès serveur ; désactive la 2FA, supprime les codes de secours, révoque les sessions, audité).
+- **Sauvegarder `TWO_FACTOR_KEY` hors du VPS** : sans elle, les secrets existants sont inutilisables (reprise via `reset-2fa`).
+- Limites : pas de QR code (saisie manuelle de la clé), vérifié uniquement avec SQLite en test.
 
 ## Risques restants
 
@@ -38,7 +49,7 @@ Préparée : colonnes `users.two_factor_enabled` et `users.two_factor_secret_enc
 - Pas encore de limitation de débit globale par IP au-delà du login (à traiter côté Caddy ou middleware).
 - Le chiffrement des futures clés API (fournisseurs IA) reste à concevoir.
 - Pas de rotation/archivage automatique du journal d'audit.
-- Pas de 2FA ni de politique de récupération de compte.
+- 2FA facultative (non obligatoire pour les administrateurs) ; récupération de compte uniquement par la CLI (accès serveur).
 - Les permissions d'agent sont appliquées par l'orchestrateur au moment de l'exécution d'une tâche, mais aucun fournisseur IA réel n'existe : ces garde-fous sont testés avec un faux fournisseur de test uniquement, jamais avec un vrai modèle.
 - L'exécution est synchrone (délai `AI_TIMEOUT_SECONDS`) : une tâche RUNNING interrompue (arrêt du processus) reste bloquée jusqu'à sa réouverture manuelle après 15 minutes.
 - Les niveaux d'autonomie 1 et 2 ont aujourd'hui le même effet (validation requise) ; seul le niveau 3 permet l'exécution sans validation pour une permission non critique.

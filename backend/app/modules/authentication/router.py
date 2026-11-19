@@ -7,14 +7,20 @@ from app.core.config import get_settings
 from app.core.db import get_db
 from app.core.errors import NotFound
 from app.modules.audit import service as audit
-from app.modules.authentication import service
+from app.modules.authentication import service, two_factor
 from app.modules.authentication.deps import AuthContext, get_auth_context
 from app.modules.authentication.schemas import (
     LoginRequest,
     MeOut,
     PasswordChange,
     PreferencesUpdate,
+    RecoveryCodesOut,
     SessionOut,
+    TwoFactorCodeIn,
+    TwoFactorConfirmIn,
+    TwoFactorSetupIn,
+    TwoFactorSetupOut,
+    TwoFactorStatus,
 )
 from app.modules.permissions.policy import permissions_for
 from app.modules.users.schemas import UserOut
@@ -46,7 +52,7 @@ def _clear_cookies(response: Response) -> None:
 
 @router.post("/login", response_model=MeOut)
 def login(payload: LoginRequest, request: Request, response: Response, db: Session = Depends(get_db)):
-    result = service.login(db, request, payload.email, payload.password)
+    result = service.login(db, request, payload.email, payload.password, payload.otp)
     _set_cookies(response, result.session_token, result.csrf_token)
     response.headers["Cache-Control"] = "no-store"
     return _me(result.user)
@@ -99,6 +105,62 @@ def change_password(
 ):
     service.change_password(db, request, ctx.user, ctx.session, payload.current_password, payload.new_password)
     return Response(status_code=204)
+
+
+@router.get("/2fa", response_model=TwoFactorStatus)
+def two_factor_status(response: Response, ctx: AuthContext = Depends(get_auth_context), db: Session = Depends(get_db)):
+    response.headers["Cache-Control"] = "no-store"
+    return two_factor.status(db, ctx.user)
+
+
+@router.post("/2fa/setup", response_model=TwoFactorSetupOut)
+def two_factor_setup(
+    payload: TwoFactorSetupIn,
+    request: Request,
+    response: Response,
+    ctx: AuthContext = Depends(get_auth_context),
+    db: Session = Depends(get_db),
+):
+    secret, uri = two_factor.begin_setup(db, request, ctx.user, payload.password)
+    response.headers["Cache-Control"] = "no-store"
+    return TwoFactorSetupOut(secret=secret, otpauth_uri=uri)
+
+
+@router.post("/2fa/enable", response_model=RecoveryCodesOut)
+def two_factor_enable(
+    payload: TwoFactorCodeIn,
+    request: Request,
+    response: Response,
+    ctx: AuthContext = Depends(get_auth_context),
+    db: Session = Depends(get_db),
+):
+    codes = two_factor.enable(db, request, ctx.user, ctx.session, payload.code)
+    response.headers["Cache-Control"] = "no-store"
+    return RecoveryCodesOut(recovery_codes=codes)
+
+
+@router.post("/2fa/disable", status_code=204)
+def two_factor_disable(
+    payload: TwoFactorConfirmIn,
+    request: Request,
+    ctx: AuthContext = Depends(get_auth_context),
+    db: Session = Depends(get_db),
+):
+    two_factor.disable(db, request, ctx.user, payload.password, payload.code)
+    return Response(status_code=204)
+
+
+@router.post("/2fa/recovery-codes", response_model=RecoveryCodesOut)
+def two_factor_recovery_codes(
+    payload: TwoFactorConfirmIn,
+    request: Request,
+    response: Response,
+    ctx: AuthContext = Depends(get_auth_context),
+    db: Session = Depends(get_db),
+):
+    codes = two_factor.regenerate_recovery_codes(db, request, ctx.user, payload.password, payload.code)
+    response.headers["Cache-Control"] = "no-store"
+    return RecoveryCodesOut(recovery_codes=codes)
 
 
 @router.get("/sessions", response_model=list[SessionOut])

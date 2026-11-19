@@ -149,8 +149,9 @@ function SecurityTab() {
         {notice && <SuccessBanner message={notice} />}
         {error && <ErrorBanner message={error} />}
         <button type="submit" className="btn-primary">{t("common.save")}</button>
-        <p className="text-xs text-slate-500">{t("settings.security.two_factor")}</p>
       </form>
+
+      <TwoFactorCard />
 
       <section className="card">
         <h2 className="mb-3 text-lg font-semibold text-white">{t("settings.security.sessions_title")}</h2>
@@ -183,6 +184,204 @@ function SecurityTab() {
         )}
       </section>
     </div>
+  );
+}
+
+interface TwoFactorState {
+  enabled: boolean;
+  available: boolean;
+  recovery_codes_left: number;
+}
+
+type TwoFactorMode = "idle" | "setup" | "disable" | "regenerate";
+
+function TwoFactorCard() {
+  const { t } = useI18n();
+  const status = useAsync(() => api<TwoFactorState>("/auth/2fa"), []);
+  const [mode, setMode] = useState<TwoFactorMode>("idle");
+  const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
+  const [setup, setSetup] = useState<{ secret: string; otpauth_uri: string } | null>(null);
+  const [codes, setCodes] = useState<string[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const reset = () => {
+    setMode("idle");
+    setPassword("");
+    setCode("");
+    setSetup(null);
+    setError(null);
+  };
+
+  const run = async (action: () => Promise<void>) => {
+    setError(null);
+    setBusy(true);
+    try {
+      await action();
+    } catch (err) {
+      setError(t(errorKey(err)));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const start = (e: FormEvent) => {
+    e.preventDefault();
+    void run(async () => {
+      setSetup(await api<{ secret: string; otpauth_uri: string }>("/auth/2fa/setup", { method: "POST", body: { password } }));
+      setPassword("");
+    });
+  };
+
+  const confirm = (e: FormEvent) => {
+    e.preventDefault();
+    void run(async () => {
+      const res = await api<{ recovery_codes: string[] }>("/auth/2fa/enable", { method: "POST", body: { code } });
+      reset();
+      setCodes(res.recovery_codes);
+      status.reload();
+    });
+  };
+
+  const disable = (e: FormEvent) => {
+    e.preventDefault();
+    void run(async () => {
+      await api("/auth/2fa/disable", { method: "POST", body: { password, code } });
+      reset();
+      status.reload();
+    });
+  };
+
+  const regenerate = (e: FormEvent) => {
+    e.preventDefault();
+    void run(async () => {
+      const res = await api<{ recovery_codes: string[] }>("/auth/2fa/recovery-codes", { method: "POST", body: { password, code } });
+      reset();
+      setCodes(res.recovery_codes);
+      status.reload();
+    });
+  };
+
+  const passwordField = (
+    <div>
+      <label htmlFor="tfa-pw" className="label">{t("settings.security.2fa.password")}</label>
+      <input id="tfa-pw" type="password" required autoComplete="current-password" className="input" value={password} onChange={(e) => setPassword(e.target.value)} />
+    </div>
+  );
+  const codeField = (
+    <div>
+      <label htmlFor="tfa-code" className="label">{t("settings.security.2fa.code")}</label>
+      <input id="tfa-code" type="text" required autoComplete="one-time-code" className="input" value={code} onChange={(e) => setCode(e.target.value)} />
+    </div>
+  );
+
+  return (
+    <section className="card space-y-4">
+      <h2 className="text-lg font-semibold text-white">{t("settings.security.2fa.title")}</h2>
+      {status.loading && !status.data ? (
+        <Spinner />
+      ) : status.error || !status.data ? (
+        <ErrorBanner message={t("common.error")} onRetry={status.reload} />
+      ) : (
+        <>
+          <p className="text-sm text-slate-400">{t("settings.security.2fa.intro")}</p>
+          <div className="flex items-center gap-3">
+            <Badge tone={status.data.enabled ? "ok" : "neutral"}>
+              {t(status.data.enabled ? "settings.security.2fa.enabled" : "settings.security.2fa.disabled")}
+            </Badge>
+            {status.data.enabled && (
+              <span className="text-xs text-slate-500">
+                {t("settings.security.2fa.codes_left", { count: status.data.recovery_codes_left })}
+              </span>
+            )}
+          </div>
+
+          {!status.data.available && !status.data.enabled && (
+            <p role="note" className="text-sm text-amber-200">{t("settings.security.2fa.unavailable")}</p>
+          )}
+
+          {codes && (
+            <div role="group" aria-label={t("settings.security.2fa.codes_title")} className="space-y-2 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3">
+              <p className="text-sm font-medium text-amber-100">{t("settings.security.2fa.codes_title")}</p>
+              <p className="text-xs text-amber-200">{t("settings.security.2fa.codes_warning")}</p>
+              <ul className="grid grid-cols-2 gap-1 font-mono text-sm text-white">
+                {codes.map((c) => (
+                  <li key={c}>{c}</li>
+                ))}
+              </ul>
+              <button type="button" className="btn-secondary" onClick={() => setCodes(null)}>
+                {t("settings.security.2fa.codes_done")}
+              </button>
+            </div>
+          )}
+
+          {error && <ErrorBanner message={error} />}
+
+          {mode === "idle" && !codes && (
+            <div className="flex flex-wrap gap-2">
+              {!status.data.enabled && status.data.available && (
+                <button type="button" className="btn-primary" onClick={() => setMode("setup")}>
+                  {t("settings.security.2fa.start")}
+                </button>
+              )}
+              {status.data.enabled && (
+                <>
+                  <button type="button" className="btn-secondary" onClick={() => setMode("regenerate")}>
+                    {t("settings.security.2fa.regenerate")}
+                  </button>
+                  <button type="button" className="btn-secondary" onClick={() => setMode("disable")}>
+                    {t("settings.security.2fa.disable")}
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          {mode === "setup" && !setup && (
+            <form onSubmit={start} className="space-y-3">
+              {passwordField}
+              <div className="flex gap-2">
+                <button type="submit" className="btn-primary" disabled={busy}>{t("settings.security.2fa.start")}</button>
+                <button type="button" className="btn-secondary" onClick={reset}>{t("common.cancel")}</button>
+              </div>
+            </form>
+          )}
+
+          {mode === "setup" && setup && (
+            <form onSubmit={confirm} className="space-y-3">
+              <p className="text-xs text-slate-400">{t("settings.security.2fa.setup_hint")}</p>
+              <div>
+                <p className="label">{t("settings.security.2fa.secret_label")}</p>
+                <code className="block break-all rounded bg-ink-800 px-3 py-2 text-sm text-white">{setup.secret}</code>
+              </div>
+              <div>
+                <p className="label">{t("settings.security.2fa.uri_label")}</p>
+                <code className="block break-all rounded bg-ink-800 px-3 py-2 text-xs text-slate-300">{setup.otpauth_uri}</code>
+              </div>
+              {codeField}
+              <div className="flex gap-2">
+                <button type="submit" className="btn-primary" disabled={busy}>{t("settings.security.2fa.confirm")}</button>
+                <button type="button" className="btn-secondary" onClick={reset}>{t("common.cancel")}</button>
+              </div>
+            </form>
+          )}
+
+          {(mode === "disable" || mode === "regenerate") && (
+            <form onSubmit={mode === "disable" ? disable : regenerate} className="space-y-3">
+              {passwordField}
+              {codeField}
+              <div className="flex gap-2">
+                <button type="submit" className="btn-primary" disabled={busy}>
+                  {t(mode === "disable" ? "settings.security.2fa.disable" : "settings.security.2fa.regenerate")}
+                </button>
+                <button type="button" className="btn-secondary" onClick={reset}>{t("common.cancel")}</button>
+              </div>
+            </form>
+          )}
+        </>
+      )}
+    </section>
   );
 }
 

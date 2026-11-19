@@ -25,6 +25,21 @@ class AuthSession(Base):
     revoked_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
 
 
+class RecoveryCode(Base):
+    """Code de secours 2FA, usage unique ; seule l'empreinte SHA-256 est stockée."""
+
+    __tablename__ = "recovery_codes"
+    __table_args__ = (Index("ix_recovery_codes_user", "user_id"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+    )
+    code_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(UTCDateTime, nullable=False, default=utcnow)
+    used_at: Mapped[datetime | None] = mapped_column(UTCDateTime, nullable=True)
+
+
 class LoginAttempt(Base):
     __tablename__ = "login_attempts"
     __table_args__ = (

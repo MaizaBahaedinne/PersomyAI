@@ -14,6 +14,8 @@ export function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [otp, setOtp] = useState("");
+  const [needOtp, setNeedOtp] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -25,9 +27,19 @@ export function LoginForm() {
     setError(null);
     setBusy(true);
     try {
-      await login(email.trim(), password);
+      await login(email.trim(), password, needOtp ? otp.trim() : undefined);
       router.replace("/dashboard");
     } catch (e) {
+      if (e instanceof ApiError && e.code === "two_factor_required") {
+        setNeedOtp(true);
+        setOtp("");
+        return;
+      }
+      if (e instanceof ApiError && e.code === "invalid_otp") {
+        setError(t("login.error.invalid_otp"));
+        setOtp("");
+        return;
+      }
       if (e instanceof ApiError && e.code === "login_throttled") {
         setError(t("login.error.throttled", { minutes: Math.max(1, Math.ceil((e.retryAfter ?? 60) / 60)) }));
       } else if (e instanceof ApiError && e.status === 401) {
@@ -83,6 +95,24 @@ export function LoginForm() {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
+          {needOtp && (
+            <div>
+              <label htmlFor="otp" className="label">
+                {t("login.otp")}
+              </label>
+              <input
+                id="otp"
+                type="text"
+                autoComplete="one-time-code"
+                autoFocus
+                required
+                className="input"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+              />
+              <p className="mt-1 text-xs text-slate-500">{t("login.otp_hint")}</p>
+            </div>
+          )}
           {error && (
             <p role="alert" className="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-200">
               {error}

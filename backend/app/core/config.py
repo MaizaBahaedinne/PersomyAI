@@ -27,6 +27,9 @@ class Settings(BaseSettings):
 
     password_min_length: int = 12
 
+    # Clé Fernet (base64 urlsafe, 32 octets) qui chiffre les secrets TOTP. Vide = 2FA indisponible.
+    two_factor_key: str = ""
+
     # Aucun fournisseur IA par défaut : tant qu'il est vide, aucun appel IA n'est possible.
     ai_provider: str = ""
     ai_timeout_seconds: int = 60

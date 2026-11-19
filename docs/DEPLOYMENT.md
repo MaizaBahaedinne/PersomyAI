@@ -1,6 +1,6 @@
 # Déploiement
 
-**Aucun déploiement n'a été exécuté.** Toute opération sur le VPS OVH nécessite une validation humaine explicite. Le VPS historique du site Laravel, le DNS et le pare-feu ne sont pas concernés.
+**Un premier déploiement a été réalisé manuellement sur le VPS OVH (pile `persomy`, migrations 0001 à 0003).** Toute nouvelle opération sur le VPS (mise à jour, bascule, nettoyage d'une ancienne pile) nécessite une validation humaine explicite. Le DNS et le pare-feu ne sont pas concernés par ce dépôt.
 
 ## Prérequis VPS
 
@@ -18,6 +18,8 @@ Ubuntu 24.04, Docker Engine + plugin Compose, ports 80/443 ouverts, DNS `app.per
 | `COOKIE_SAMESITE` | `lax` ou `strict` | `lax` |
 | `SESSION_ABSOLUTE_HOURS` / `SESSION_IDLE_MINUTES` | Durées de session | `12` / `120` |
 | `LOGIN_MAX_FAILURES_PER_ACCOUNT` / `_PER_IP` / `LOGIN_WINDOW_MINUTES` | Anti force brute | `5` / `20` / `15` |
+| `TWO_FACTOR_KEY` | Clé Fernet chiffrant les secrets 2FA ; sans elle la 2FA est indisponible. À sauvegarder hors du VPS | voir OPERATIONS.md |
+| `AI_PROVIDER` | Fournisseur IA (aucun n'est implémenté : laisser vide) | vide |
 | `LOG_LEVEL` | Niveau de logs | `INFO` |
 | `BACKEND_INTERNAL_URL` | Cible interne du proxy Next.js (fixée au build) | `http://backend:8000` |
 
@@ -34,6 +36,15 @@ Ubuntu 24.04, Docker Engine + plugin Compose, ports 80/443 ouverts, DNS `app.per
 7. Vérifier : `https://api.persomy.com/health/ready`, connexion sur `https://app.persomy.com`.
 
 Si le Caddy existant sert déjà d'autres sites, ne pas le remplacer : ajouter uniquement les blocs de `Caddyfile` à la configuration existante.
+
+## Pièges rencontrés lors du premier déploiement
+
+- **`docker-entrypoint.sh: Permission denied`** (backend en boucle de redémarrage) : cause probable, un `umask 077` lors du `git clone` qui retire le bit exécutable ou la lecture. Cloner avec `umask 022`, ou corriger : `chmod +x backend/docker-entrypoint.sh` puis reconstruire l'image.
+- **Docker sans `sudo`** : si l'utilisateur n'est pas dans le groupe `docker`, préfixer par `sudo docker …` ou lancer les scripts avec `DOCKER="sudo docker"`.
+- **Plusieurs piles Compose sur le même VPS** : le nom de projet Compose (dossier ou `-p`) détermine les noms de conteneurs et de volumes (`<projet>_pgdata`). Ne jamais réutiliser ni supprimer les volumes d'une autre pile sans sauvegarde et accord explicite.
+- **Caddy existant sur 80/443** : tant qu'un ancien Caddy détient ces ports, il sert l'ancien site (ex. 404 sur `/login`). Bascule : arrêter l'ancien (`docker stop <ancien-caddy>`, **sans** supprimer ses volumes), puis `docker compose up -d caddy` dans la nouvelle pile. Retour arrière : `docker compose stop caddy` puis `docker start <ancien-caddy>`. Après un redémarrage du VPS, vérifier quel conteneur détient 80/443 (politique `restart` de l'ancien Caddy).
+- **CLI** : `docker compose exec backend python -m app.cli …` (sur une seule ligne ; avec `sudo docker` sur le VPS).
+- **Mise à jour** : `git pull --ff-only`, puis `docker compose build && docker compose up -d` (reconstruction nécessaire si `requirements.txt` change). Les migrations s'appliquent au démarrage ; vérifier `alembic_version` (0004 attendu après l'ajout de la 2FA).
 
 ## Retour arrière
 

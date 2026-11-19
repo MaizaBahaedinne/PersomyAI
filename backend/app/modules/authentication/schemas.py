@@ -16,6 +16,8 @@ from app.modules.users.schemas import (
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str = Field(min_length=1, max_length=PASSWORD_MAX)
+    # Code TOTP à 6 chiffres ou code de secours ; requis seulement si la 2FA est activée.
+    otp: Optional[str] = Field(default=None, max_length=32)
 
     @field_validator("email")
     @classmethod
@@ -41,6 +43,33 @@ class PasswordChange(BaseModel):
 class PreferencesUpdate(BaseModel):
     preferred_language: Optional[Language] = None
     display_name: Optional[str] = Field(default=None, min_length=1, max_length=120)
+
+
+class TwoFactorStatus(BaseModel):
+    enabled: bool
+    available: bool
+    recovery_codes_left: int
+
+
+class TwoFactorSetupIn(BaseModel):
+    password: str = Field(min_length=1, max_length=PASSWORD_MAX)
+
+
+class TwoFactorSetupOut(BaseModel):
+    secret: str
+    otpauth_uri: str
+
+
+class TwoFactorCodeIn(BaseModel):
+    code: str = Field(min_length=1, max_length=32)
+
+
+class TwoFactorConfirmIn(TwoFactorCodeIn):
+    password: str = Field(min_length=1, max_length=PASSWORD_MAX)
+
+
+class RecoveryCodesOut(BaseModel):
+    recovery_codes: list[str]
 
 
 class SessionOut(BaseModel):

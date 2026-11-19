@@ -10,7 +10,12 @@ Erreurs : `{"error": {"code": "...", "message": "...", "details": [...]}}`.
 
 | Méthode | Route | Permission | Description |
 | --- | --- | --- | --- |
-| POST | `/auth/login` | publique | `{email, password}` → utilisateur + permissions, pose les cookies. 401 générique, 429 si bloqué |
+| POST | `/auth/login` | publique | `{email, password, otp?}` → utilisateur + permissions, pose les cookies. 401 générique, 429 si bloqué. Si la 2FA est active : sans `otp` → 401 `two_factor_required` (aucune session, aucun échec compté) ; `otp` faux → 401 `invalid_otp` (compté par l'anti force brute) |
+| GET | `/auth/2fa` | session | `{enabled, available, recovery_codes_left}` (`available` = `TWO_FACTOR_KEY` valide) |
+| POST | `/auth/2fa/setup` | session | `{password}` → `{secret, otpauth_uri}` (affichés une seule fois). 409 `two_factor_already_enabled`, 409 `two_factor_unavailable` |
+| POST | `/auth/2fa/enable` | session | `{code}` → `{recovery_codes}` (10 codes, affichés une seule fois) ; révoque les autres sessions. 409 `two_factor_not_started`, 401 `invalid_otp` |
+| POST | `/auth/2fa/disable` | session | `{password, code}` → 204. 409 `two_factor_not_enabled`, 401 `invalid_credentials` / `invalid_otp` |
+| POST | `/auth/2fa/recovery-codes` | session | `{password, code}` → nouveaux `{recovery_codes}` (les anciens sont invalidés) |
 | POST | `/auth/logout` | session | Révoque la session |
 | GET | `/auth/me` | session | Utilisateur et permissions |
 | PATCH | `/auth/me` | session | `display_name`, `preferred_language` |

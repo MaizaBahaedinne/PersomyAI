@@ -18,6 +18,7 @@ from app.core.security import (
     verify_password,
 )
 from app.modules.audit import service as audit
+from app.modules.authentication import two_factor
 from app.modules.authentication.models import AuthSession, LoginAttempt
 from app.modules.users.models import User
 
@@ -86,7 +87,7 @@ def purge_old(db: Session) -> None:
 # --- Connexion / sessions ------------------------------------------------------
 
 
-def login(db: Session, request: Request, email: str, password: str) -> LoginResult:
+def login(db: Session, request: Request, email: str, password: str, otp: str | None = None) -> LoginResult:
     s = get_settings()
     email = email.strip().lower()
     ip = client_ip(request)
@@ -124,6 +125,20 @@ def login(db: Session, request: Request, email: str, password: str) -> LoginResu
         raise Unauthorized(GENERIC_LOGIN_ERROR, code="invalid_credentials")
 
     assert user is not None
+    second_factor = None
+    if user.two_factor_enabled:
+        # Le mot de passe est valide : sans code, on le demande (aucune session n'est créée, aucun échec compté).
+        if not otp or not otp.strip():
+            raise Unauthorized("Two-factor code required", code="two_factor_required")
+        second_factor = two_factor.check_code(db, user, otp)
+        if second_factor is None:
+            _record_attempt(db, email, ip, success=False)
+            audit.record(
+                db, "auth.login.failed", request=request, actor_label=email, status="failure",
+                target_type="user", target_id=user.id, details={"reason": "bad_otp"},
+            )
+            db.commit()
+            raise Unauthorized("Invalid verification code", code="invalid_otp")
     if needs_rehash(user.password_hash):
         user.password_hash = hash_password(password)
 
@@ -144,7 +159,10 @@ def login(db: Session, request: Request, email: str, password: str) -> LoginResu
     user.last_login_at = now
     _record_attempt(db, email, ip, success=True)
     db.flush()
-    audit.record(db, "auth.login", request=request, actor=user, target_type="session", target_id=session.id)
+    audit.record(
+        db, "auth.login", request=request, actor=user, target_type="session", target_id=session.id,
+        details={"second_factor": second_factor} if second_factor else None,
+    )
     purge_old(db)
     db.commit()
     return LoginResult(user, session_token, csrf_token, session)

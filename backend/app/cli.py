@@ -15,6 +15,7 @@ import app.models  # noqa: F401  (enregistre tous les modèles)
 from app.core.db import new_session
 from app.core.security import hash_password
 from app.modules.audit import service as audit
+from app.modules.authentication import two_factor
 from app.modules.users.models import User
 from app.modules.users.schemas import PASSWORD_MAX, validate_password_strength
 
@@ -45,6 +46,18 @@ def create_admin(email: str, name: str, password: str, language: str = "fr") -> 
         return user
 
 
+def reset_two_factor(email: str) -> int:
+    """Désactive la 2FA d'un compte (appareil perdu) et révoque ses sessions. Accès serveur requis."""
+    email = TypeAdapter(EmailStr).validate_python(email).strip().lower()
+    with new_session() as db:
+        user = db.query(User).filter(User.email == email).first()
+        if user is None:
+            raise ValueError(f"No user with email {email}")
+        revoked = two_factor.reset(db, user)
+        db.commit()
+        return revoked
+
+
 def _prompt_password() -> str:
     first = getpass.getpass("Password (min 12 chars): ")
     second = getpass.getpass("Confirm password: ")
@@ -60,7 +73,18 @@ def main(argv: list[str] | None = None) -> int:
     admin.add_argument("--email", required=True)
     admin.add_argument("--name", required=True)
     admin.add_argument("--language", choices=["fr", "en"], default="fr")
+    reset = sub.add_parser("reset-2fa", help="Disable two-factor authentication for a lost device")
+    reset.add_argument("--email", required=True)
     args = parser.parse_args(argv)
+
+    if args.command == "reset-2fa":
+        try:
+            revoked = reset_two_factor(args.email)
+        except (ValueError, ValidationError) as exc:
+            print(f"Error: {exc}", file=sys.stderr)
+            return 1
+        print(f"Two-factor authentication disabled for {args.email.strip().lower()} ({revoked} session(s) revoked)")
+        return 0
 
     try:
         password = _prompt_password()
