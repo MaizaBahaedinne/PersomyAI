@@ -117,18 +117,20 @@ export function TaskDetailView({ id }: { id: string }) {
   };
 
   const duplicateTask = async () => {
+    const current = task;
+    if (!current) return;
     setBusy(true);
     setActionError(null);
     try {
       const copy = await api<Task>("/tasks", {
         method: "POST",
         body: {
-          title: `${task.title} (copy)`,
-          description: task.description,
-          priority: task.priority,
-          mission_id: task.mission_id,
-          agent_id: task.agent_id,
-          required_scope: task.required_scope,
+          title: `${current.title} (copy)`,
+          description: current.description,
+          priority: current.priority,
+          mission_id: current.mission_id,
+          agent_id: current.agent_id,
+          required_scope: current.required_scope,
         },
       });
       setNotice(t("tasks.n_copied"));
