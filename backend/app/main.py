@@ -21,6 +21,7 @@ from app.modules.departments.router import router as departments_router
 from app.modules.finance.router import router as finance_router
 from app.modules.orchestration.router import missions_router, tasks_router
 from app.modules.settings.router import router as settings_router
+from app.modules.team.router import router as team_router
 from app.modules.users.router import router as users_router
 
 SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
@@ -91,6 +92,7 @@ def create_app() -> FastAPI:
         automations_router,
         crm_router,
         finance_router,
+        team_router,
         agents_router,
         missions_router,
         tasks_router,

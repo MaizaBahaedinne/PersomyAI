@@ -98,6 +98,14 @@ Préfixe `/api/v1/finance`.
 | GET | `/finance/summary` | `finance:read` | Coûts IA réels (total, 30 jours, moyenne par run) |
 | POST | `/finance/simulate` | `finance:simulate` | Simulation mensuelle (`revenue`, marge, coût IA, croissance) |
 
+## Équipe (RH)
+
+Préfixe `/api/v1/team`.
+
+| Méthode | Route | Permission | Description |
+| --- | --- | --- | --- |
+| GET | `/team?search&active&limit&offset` | `team:read` | Annuaire utilisateurs + indicateurs (`total`, `active`, `super_admins`, `with_two_factor`) |
+
 ## Missions et tâches (orchestrateur)
 
 Préfixes `/api/v1/missions` et `/api/v1/tasks`. Les routes statiques (`/tasks/provider`) sont déclarées avant `/{id}`.
@@ -138,6 +146,6 @@ Contrôles de `POST /tasks/{id}/run`, dans cet ordre (chaque refus est audité `
 | Rôle | Permissions |
 | --- | --- |
 | SUPER_ADMIN | toutes |
-| ADMIN | dashboard, users (lecture/écriture limitée aux rôles non privilégiés), audit, settings (lecture), révocation de sessions, agents (lecture/écriture, arrêt d'urgence), orchestration (lecture, écriture, validation, exécution), automatisations (lecture/écriture), CRM (lecture/écriture), finance (lecture/simulation) |
-| OPERATOR | dashboard, users (lecture), settings (lecture), agents (lecture), orchestration (lecture), automatisations (lecture), CRM (lecture), finance (lecture/simulation) |
+| ADMIN | dashboard, users (lecture/écriture limitée aux rôles non privilégiés), audit, settings (lecture), révocation de sessions, agents (lecture/écriture, arrêt d'urgence), orchestration (lecture, écriture, validation, exécution), automatisations (lecture/écriture), CRM (lecture/écriture), finance (lecture/simulation), équipe (lecture) |
+| OPERATOR | dashboard, users (lecture), settings (lecture), agents (lecture), orchestration (lecture), automatisations (lecture), CRM (lecture), finance (lecture/simulation), équipe (lecture) |
 | VIEWER | dashboard |

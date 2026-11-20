@@ -280,3 +280,27 @@ export interface FinanceSimulation {
   margin_after_ai_cents: number;
   ai_cost_share_percent: number;
 }
+
+export interface TeamMember {
+  id: string;
+  display_name: string;
+  email: string;
+  role: string;
+  is_active: boolean;
+  preferred_language: string;
+  two_factor_enabled: boolean;
+  last_login_at: string | null;
+}
+
+export interface TeamSummary {
+  total: number;
+  active: number;
+  disabled: number;
+  super_admins: number;
+  with_two_factor: number;
+}
+
+export interface TeamData {
+  summary: TeamSummary;
+  items: TeamMember[];
+}

@@ -32,6 +32,7 @@ class Permission(str, Enum):
     CRM_WRITE = "crm:write"
     FINANCE_READ = "finance:read"
     FINANCE_SIMULATE = "finance:simulate"
+    TEAM_READ = "team:read"
 
 
 _ALL = set(Permission)
@@ -57,6 +58,7 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.CRM_WRITE,
         Permission.FINANCE_READ,
         Permission.FINANCE_SIMULATE,
+        Permission.TEAM_READ,
     },
     Role.OPERATOR: {
         Permission.DASHBOARD_READ,
@@ -68,6 +70,7 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.CRM_READ,
         Permission.FINANCE_READ,
         Permission.FINANCE_SIMULATE,
+        Permission.TEAM_READ,
     },
     Role.VIEWER: {Permission.DASHBOARD_READ},
 }
