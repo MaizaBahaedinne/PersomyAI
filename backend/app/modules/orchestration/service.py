@@ -470,6 +470,14 @@ def _prompts(agent: Agent, task: Task, feedback: list[str] | None = None) -> tup
         "Do not explain how to do it, do not provide meta-commentary, and avoid step-by-step guidance unless"
         " explicitly asked in the task."
     )
+    system += (
+        " Never invent people, companies, numbers, roles, or sources. "
+        "If information is missing, uncertain, or not verifiable from the task context, say so explicitly and"
+        " return 'NOT AVAILABLE' for that field. "
+        "When producing a list extracted from public data, include a short 'Evidence' section with the exact"
+        " source snippets/anchors used. "
+        "If no reliable evidence is available, return an empty list and explain why in one sentence."
+    )
     prompt = task.title if not task.description else f"{task.title}\n\n{task.description}"
     if feedback:
         feedback_block = "\n".join(f"- {item}" for item in feedback)
