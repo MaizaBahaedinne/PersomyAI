@@ -13,6 +13,18 @@ Le mot de passe doit contenir au moins 12 caractères, avec lettres et chiffres.
 
 En cas de perte d'accès des deux administrateurs, créer un nouveau `SUPER_ADMIN` avec la même commande (accès serveur requis).
 
+## Injecter les agents business (10 profils)
+
+Depuis le VPS :
+
+```bash
+cd /opt/persomy-v2
+git pull --ff-only
+DOCKER="sudo docker" ./scripts/seed-business-agents.sh
+```
+
+Le script est idempotent : il crée les agents manquants et met à jour ceux qui existent deja
+(missions, permissions, outils, limites et budgets).
 ## Sauvegarde
 
 ```bash
