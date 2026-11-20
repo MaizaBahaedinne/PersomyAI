@@ -26,6 +26,8 @@ class Permission(str, Enum):
     ORCHESTRATION_WRITE = "orchestration:write"  # missions et tâches : créer, modifier, affecter, annuler
     ORCHESTRATION_APPROVE = "orchestration:approve"  # valider ou rejeter une tâche sensible
     ORCHESTRATION_RUN = "orchestration:run"  # lancer l'exécution d'une tâche
+    AUTOMATIONS_READ = "automations:read"
+    AUTOMATIONS_WRITE = "automations:write"
 
 
 _ALL = set(Permission)
@@ -45,6 +47,8 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.ORCHESTRATION_WRITE,
         Permission.ORCHESTRATION_APPROVE,
         Permission.ORCHESTRATION_RUN,
+        Permission.AUTOMATIONS_READ,
+        Permission.AUTOMATIONS_WRITE,
     },
     Role.OPERATOR: {
         Permission.DASHBOARD_READ,
@@ -52,6 +56,7 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.SETTINGS_READ,
         Permission.AGENTS_READ,
         Permission.ORCHESTRATION_READ,
+        Permission.AUTOMATIONS_READ,
     },
     Role.VIEWER: {Permission.DASHBOARD_READ},
 }

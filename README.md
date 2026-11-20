@@ -15,7 +15,9 @@ Plateforme de pilotage d'une entreprise gérée par deux administrateurs humains
 | Centre de contrôle (données réelles : utilisateurs, sessions, sécurité, services) | Terminé et testé |
 | Agents IA (identités techniques, statuts, permissions, outils, historique, arrêt d'urgence) | Terminé et testé (gestion uniquement : aucun agent n'exécute encore de tâche ni n'appelle de modèle IA) |
 | Orchestrateur (missions, tâches, validation humaine, interface fournisseur IA) | Développé et testé (tests automatisés) ; **aucun fournisseur IA réel n'existe** : l'exécution d'une tâche répond `provider_not_configured`, rien n'est simulé |
-| Automatisations, départements, CRM, finance, RH, analytics | Non implémenté (pages « en préparation », aucune donnée fictive) |
+| Automatisations | Développé et testé (SQLite, tests automatisés) : workflows configurables, déclencheurs `TASK_STATUS_CHANGED` / `SCHEDULE`, garde-fou anti-boucle (clé + cooldown), audit ; exécution métier réelle encore à connecter |
+| Départements | Développé et testé (lecture réelle): synthèse des agents par département |
+| CRM, finance, RH, analytics | Non implémenté (pages « en préparation », aucune donnée fictive) |
 | Authentification à deux facteurs (TOTP + codes de secours) | Développé et testé (SQLite, tests automatisés) ; non vérifié sur PostgreSQL ; facultative (non imposée) ; pas de QR code (saisie manuelle de la clé) ; exige `TWO_FACTOR_KEY` |
 | Déploiement VPS | Réalisé manuellement sur un VPS (migrations 0001 à 0003 appliquées) ; les évolutions suivantes (migration 0004, 2FA) sont à déployer avec validation humaine |
 

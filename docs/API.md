@@ -55,7 +55,22 @@ Préfixe `/api/v1/agents`. Les routes statiques sont déclarées avant `/{id}`.
 | POST | `/agents/emergency-stop` | `agents:write` (suspend tous les agents actifs, bloque toute activation) |
 | DELETE | `/agents/emergency-stop` | `agents:grant` (libère ; les agents restent en pause) |
 
-Codes d'erreur spécifiques : `agent_not_found` (404), `agent_name_taken`, `status_unchanged`, `invalid_transition`, `agent_incomplete`, `access_revoked`, `emergency_stop_active`, `agent_not_deletable` (409), `super_admin_required` (403).
+Codes d'erreur spécifiques : `agent_not_found` (404), `status_unchanged`, `agent_name_taken`, `invalid_transition`, `agent_incomplete`, `access_revoked`, `emergency_stop_active`, `agent_not_deletable` (409), `super_admin_required` (403).
+
+## Automatisations
+
+Préfixe `/api/v1/automations`.
+
+| Méthode | Route | Permission | Description |
+| --- | --- | --- | --- |
+| GET | `/automations?search&status&trigger_type&limit&offset` | `automations:read` | Liste filtrable (`DRAFT`/`ACTIVE`/`PAUSED`, `TASK_STATUS_CHANGED`/`SCHEDULE`) |
+| POST | `/automations` | `automations:write` | Crée une automatisation en `DRAFT` |
+| GET | `/automations/{id}` | `automations:read` | Détail |
+| PATCH | `/automations/{id}` | `automations:write` | Modifie nom, déclencheur, conditions, actions, garde-fou |
+| POST | `/automations/{id}/status` | `automations:write` | Change le statut (`DRAFT`/`ACTIVE`/`PAUSED`) |
+| POST | `/automations/{id}/simulate-trigger` | `automations:write` | Simule un événement (`event_key`) et applique la protection anti-boucle (`anti_loop_key`, `cooldown_seconds`) |
+
+Codes d'erreur principaux : `automation_not_found`, `automation_action_required`, `automation_loop_risk`, `automation_name_taken`, `automation_status_unchanged`, `automation_not_active`, `automation_loop_blocked`.
 
 ## Missions et tâches (orchestrateur)
 
@@ -88,6 +103,7 @@ Contrôles de `POST /tasks/{id}/run`, dans cet ordre (chaque refus est audité `
 | Méthode | Route | Permission |
 | --- | --- | --- |
 | GET | `/dashboard/summary` | `dashboard:read` |
+| GET | `/departments/summary` | `dashboard:read` |
 | GET | `/audit?action&status&actor&since&limit&offset` | `audit:read` |
 | GET / PUT | `/settings` | `settings:read` / `settings:write` |
 
@@ -96,6 +112,6 @@ Contrôles de `POST /tasks/{id}/run`, dans cet ordre (chaque refus est audité `
 | Rôle | Permissions |
 | --- | --- |
 | SUPER_ADMIN | toutes |
-| ADMIN | dashboard, users (lecture/écriture limitée aux rôles non privilégiés), audit, settings (lecture), révocation de sessions, agents (lecture/écriture, arrêt d'urgence), orchestration (lecture, écriture, validation, exécution) |
-| OPERATOR | dashboard, users (lecture), settings (lecture), agents (lecture), orchestration (lecture) |
+| ADMIN | dashboard, users (lecture/écriture limitée aux rôles non privilégiés), audit, settings (lecture), révocation de sessions, agents (lecture/écriture, arrêt d'urgence), orchestration (lecture, écriture, validation, exécution), automatisations (lecture/écriture) |
+| OPERATOR | dashboard, users (lecture), settings (lecture), agents (lecture), orchestration (lecture), automatisations (lecture) |
 | VIEWER | dashboard |

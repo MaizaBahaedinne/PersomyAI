@@ -13,7 +13,7 @@ from app.modules.settings.service import get_settings_values
 from app.modules.users.models import User
 
 # Modules dont les données n'existent pas encore : jamais de chiffres fictifs.
-PENDING_MODULES = ["automations"]
+PENDING_MODULES = ["crm", "finance", "team", "analytics"]
 
 FAILED_LOGIN_ALERT_THRESHOLD = 10
 

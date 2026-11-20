@@ -212,3 +212,29 @@ export interface AppSettings {
   company_name: string;
   default_language: Language;
 }
+
+export type AutomationStatus = "DRAFT" | "ACTIVE" | "PAUSED";
+export type AutomationTriggerType = "TASK_STATUS_CHANGED" | "SCHEDULE";
+
+export interface Automation {
+  id: string;
+  name: string;
+  description: string;
+  status: AutomationStatus;
+  trigger_type: AutomationTriggerType;
+  trigger_config: Record<string, unknown>;
+  conditions: Record<string, unknown>[];
+  actions: Record<string, unknown>[];
+  anti_loop_key: string | null;
+  cooldown_seconds: number;
+  last_triggered_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DepartmentSummary {
+  code: string;
+  agents_total: number;
+  agents_active: number;
+  agents_paused: number;
+}
