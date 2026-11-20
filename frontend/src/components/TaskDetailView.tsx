@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
@@ -38,6 +39,7 @@ const STALE_RUNNING_MS = 15 * 60 * 1000;
 const CANCELLABLE = ["OPEN", "AWAITING_APPROVAL", "APPROVED", "FAILED", "REJECTED"];
 
 export function TaskDetailView({ id }: { id: string }) {
+  const router = useRouter();
   const { t, label, locale } = useI18n();
   const { can } = useAuth();
   const canWrite = can("orchestration:write");
@@ -111,6 +113,30 @@ export function TaskDetailView({ id }: { id: string }) {
     } finally {
       setBusy(false);
       refresh();
+    }
+  };
+
+  const duplicateTask = async () => {
+    setBusy(true);
+    setActionError(null);
+    try {
+      const copy = await api<Task>("/tasks", {
+        method: "POST",
+        body: {
+          title: `${task.title} (copy)`,
+          description: task.description,
+          priority: task.priority,
+          mission_id: task.mission_id,
+          agent_id: task.agent_id,
+          required_scope: task.required_scope,
+        },
+      });
+      setNotice(t("tasks.n_copied"));
+      router.push(`/tasks/${copy.id}`);
+    } catch (e) {
+      setActionError(t(errorKey(e)));
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -195,6 +221,11 @@ export function TaskDetailView({ id }: { id: string }) {
             {canRun && runnable && (
               <button type="button" className="btn-primary" onClick={() => setDialog("run")}>
                 {label("task.action", "run")}
+              </button>
+            )}
+            {canWrite && (
+              <button type="button" className="btn-secondary" onClick={() => void duplicateTask()} disabled={busy}>
+                {t("tasks.copy")}
               </button>
             )}
             {canReopen && (

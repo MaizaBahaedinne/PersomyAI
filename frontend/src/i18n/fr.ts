@@ -592,6 +592,8 @@ export const fr = {
   "tasks.n_rejected": "Tâche rejetée.",
   "tasks.n_run_done": "Tâche exécutée.",
   "tasks.n_run_failed": "L'exécution a échoué : {code}",
+  "tasks.copy": "Copier la tâche",
+  "tasks.n_copied": "Tâche copiée.",
   "tasks.n_cancelled": "Tâche annulée.",
   "tasks.n_reopened": "Tâche rouverte.",
   "tasks.runs": "Exécutions",

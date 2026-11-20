@@ -594,6 +594,8 @@ export const en: Record<MessageKey, string> = {
   "tasks.n_rejected": "Task rejected.",
   "tasks.n_run_done": "Task run.",
   "tasks.n_run_failed": "The run failed: {code}",
+  "tasks.copy": "Copy task",
+  "tasks.n_copied": "Task copied.",
   "tasks.n_cancelled": "Task cancelled.",
   "tasks.n_reopened": "Task reopened.",
   "tasks.runs": "Runs",
