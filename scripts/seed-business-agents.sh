@@ -175,7 +175,16 @@ with new_session() as db:
             agent = Agent(
                 identity_key=f"agt_{secrets.token_hex(8)}",
                 name=spec["name"],
+                description=spec["description"],
+                department=spec["department"],
+                role=spec["role"],
+                mission=spec["mission"],
+                skills=spec["skills"],
                 status="ACTIVE",
+                autonomy_level=int(spec["autonomy_level"]),
+                config={"profile": "business", "owner": "persomy"},
+                max_actions_per_day=int(spec["max_actions_per_day"]),
+                monthly_budget_cents=int(spec["monthly_budget_cents"]),
                 created_by=actor_id,
             )
             db.add(agent)
