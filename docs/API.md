@@ -72,6 +72,23 @@ Préfixe `/api/v1/automations`.
 
 Codes d'erreur principaux : `automation_not_found`, `automation_action_required`, `automation_loop_risk`, `automation_name_taken`, `automation_status_unchanged`, `automation_not_active`, `automation_loop_blocked`.
 
+## CRM
+
+Préfixe `/api/v1/crm`.
+
+| Méthode | Route | Permission | Description |
+| --- | --- | --- | --- |
+| GET | `/crm/companies?search&status&limit&offset` | `crm:read` | Liste des entreprises |
+| POST | `/crm/companies` | `crm:write` | Crée une entreprise |
+| GET | `/crm/companies/{id}` | `crm:read` | Détail entreprise |
+| PATCH | `/crm/companies/{id}` | `crm:write` | Met à jour une entreprise |
+| GET | `/crm/contacts?search&status&company_id&limit&offset` | `crm:read` | Liste des contacts |
+| POST | `/crm/contacts` | `crm:write` | Crée un contact |
+| GET | `/crm/contacts/{id}` | `crm:read` | Détail contact |
+| PATCH | `/crm/contacts/{id}` | `crm:write` | Met à jour un contact |
+
+Codes d'erreur principaux : `company_not_found`, `company_name_taken`, `contact_not_found`.
+
 ## Missions et tâches (orchestrateur)
 
 Préfixes `/api/v1/missions` et `/api/v1/tasks`. Les routes statiques (`/tasks/provider`) sont déclarées avant `/{id}`.
@@ -112,6 +129,6 @@ Contrôles de `POST /tasks/{id}/run`, dans cet ordre (chaque refus est audité `
 | Rôle | Permissions |
 | --- | --- |
 | SUPER_ADMIN | toutes |
-| ADMIN | dashboard, users (lecture/écriture limitée aux rôles non privilégiés), audit, settings (lecture), révocation de sessions, agents (lecture/écriture, arrêt d'urgence), orchestration (lecture, écriture, validation, exécution), automatisations (lecture/écriture) |
-| OPERATOR | dashboard, users (lecture), settings (lecture), agents (lecture), orchestration (lecture), automatisations (lecture) |
+| ADMIN | dashboard, users (lecture/écriture limitée aux rôles non privilégiés), audit, settings (lecture), révocation de sessions, agents (lecture/écriture, arrêt d'urgence), orchestration (lecture, écriture, validation, exécution), automatisations (lecture/écriture), CRM (lecture/écriture) |
+| OPERATOR | dashboard, users (lecture), settings (lecture), agents (lecture), orchestration (lecture), automatisations (lecture), CRM (lecture) |
 | VIEWER | dashboard |

@@ -16,7 +16,7 @@ export const MODULE_NAV: NavItem[] = [
   { href: "/tasks", label: "nav.tasks", permission: "orchestration:read" },
   { href: "/automations", label: "nav.automations", permission: "automations:read" },
   { href: "/departments", label: "nav.departments", permission: "dashboard:read" },
-  { href: "/crm", label: "nav.crm", soon: true },
+  { href: "/crm", label: "nav.crm", permission: "crm:read" },
   { href: "/finance", label: "nav.finance", soon: true },
   { href: "/team", label: "nav.team", soon: true },
   { href: "/analytics", label: "nav.analytics", soon: true },

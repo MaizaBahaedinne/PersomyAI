@@ -28,6 +28,8 @@ class Permission(str, Enum):
     ORCHESTRATION_RUN = "orchestration:run"  # lancer l'exécution d'une tâche
     AUTOMATIONS_READ = "automations:read"
     AUTOMATIONS_WRITE = "automations:write"
+    CRM_READ = "crm:read"
+    CRM_WRITE = "crm:write"
 
 
 _ALL = set(Permission)
@@ -49,6 +51,8 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.ORCHESTRATION_RUN,
         Permission.AUTOMATIONS_READ,
         Permission.AUTOMATIONS_WRITE,
+        Permission.CRM_READ,
+        Permission.CRM_WRITE,
     },
     Role.OPERATOR: {
         Permission.DASHBOARD_READ,
@@ -57,6 +61,7 @@ ROLE_PERMISSIONS: dict[Role, set[Permission]] = {
         Permission.AGENTS_READ,
         Permission.ORCHESTRATION_READ,
         Permission.AUTOMATIONS_READ,
+        Permission.CRM_READ,
     },
     Role.VIEWER: {Permission.DASHBOARD_READ},
 }

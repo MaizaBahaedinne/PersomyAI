@@ -238,3 +238,31 @@ export interface DepartmentSummary {
   agents_active: number;
   agents_paused: number;
 }
+
+export type CompanyStatus = "ACTIVE" | "ARCHIVED";
+export type ContactStatus = "LEAD" | "ACTIVE" | "INACTIVE";
+
+export interface CrmCompany {
+  id: string;
+  name: string;
+  status: CompanyStatus;
+  website: string | null;
+  notes: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CrmContact {
+  id: string;
+  company_id: string | null;
+  company_name: string | null;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  status: ContactStatus;
+  notes: string;
+  owner_user_id: string | null;
+  created_at: string;
+  updated_at: string;
+}

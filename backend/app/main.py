@@ -15,6 +15,7 @@ from app.modules.agents.router import router as agents_router
 from app.modules.audit.router import router as audit_router
 from app.modules.authentication.router import router as auth_router
 from app.modules.automations.router import router as automations_router
+from app.modules.crm.router import router as crm_router
 from app.modules.dashboard.router import router as dashboard_router
 from app.modules.departments.router import router as departments_router
 from app.modules.orchestration.router import missions_router, tasks_router
@@ -87,6 +88,7 @@ def create_app() -> FastAPI:
         dashboard_router,
         departments_router,
         automations_router,
+        crm_router,
         agents_router,
         missions_router,
         tasks_router,
