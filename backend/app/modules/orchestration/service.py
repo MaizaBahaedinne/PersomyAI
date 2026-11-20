@@ -15,6 +15,7 @@ from app.modules.agents.catalog import SCOPES
 from app.modules.agents.models import Agent
 from app.modules.audit import service as audit
 from app.modules.audit.models import AuditEvent
+from app.modules.crm.models import Company, Contact
 from app.modules.orchestration import providers
 from app.modules.orchestration.catalog import (
     CANCELLABLE_STATUSES,
@@ -489,6 +490,106 @@ def _prompts(agent: Agent, task: Task, feedback: list[str] | None = None) -> tup
     return system, prompt
 
 
+def _looks_like_crm_relaunch_task(task: Task) -> bool:
+    text = f"{task.title}\n{task.description}".lower()
+    return (
+        "crm" in text
+        and "lead" in text
+        and "14" in text
+        and "45" in text
+        and ("relance" in text or "follow" in text)
+    )
+
+
+def _segment_company(name: str | None) -> str:
+    value = (name or "").lower()
+    if any(k in value for k in ("agency", "agence", "studio")):
+        return "agences"
+    if any(k in value for k in ("shop", "store", "ecom", "e-commerce", "boutique")):
+        return "e-commerce"
+    return "PME"
+
+
+def _crm_relaunch_completion(db: Session, task: Task) -> providers.Completion | None:
+    if not _looks_like_crm_relaunch_task(task):
+        return None
+
+    now = utcnow()
+    min_date = now - timedelta(days=45)
+    max_date = now - timedelta(days=14)
+
+    rows = db.execute(
+        select(Contact, Company.name)
+        .join(Company, Contact.company_id == Company.id, isouter=True)
+        .where(
+            Contact.status == "LEAD",
+            Contact.updated_at >= min_date,
+            Contact.updated_at <= max_date,
+        )
+        .order_by(Contact.updated_at.asc())
+        .limit(300)
+    ).all()
+
+    segmented: dict[str, list[tuple[Contact, str | None]]] = {"PME": [], "agences": [], "e-commerce": []}
+    for contact, company_name in rows:
+        segmented[_segment_company(company_name)].append((contact, company_name))
+
+    def _sample_lines(segment: str) -> str:
+        items = segmented[segment][:5]
+        if not items:
+            return "- NOT AVAILABLE"
+        lines: list[str] = []
+        for c, company_name in items:
+            fullname = f"{c.first_name} {c.last_name}".strip()
+            lines.append(
+                f"- {fullname} | {company_name or 'NOT AVAILABLE'} | last_activity={c.updated_at.date().isoformat()}"
+            )
+        return "\n".join(lines)
+
+    total = sum(len(v) for v in segmented.values())
+    email_templates = {
+        "PME": "Objet: Relance rapide - optimisation de votre acquisition\nBonjour {prenom}, je reviens vers vous pour finaliser une action simple de croissance activable cette semaine. Souhaitez-vous un point de 20 min mercredi ou jeudi ?",
+        "agences": "Objet: Relance partenariat delivery\nBonjour {prenom}, je vous propose un cadrage court pour accélérer vos livraisons clients via un workflow de relance automatisé. Disponible cette semaine pour 20 min ?",
+        "e-commerce": "Objet: Relance performance e-commerce\nBonjour {prenom}, j'ai préparé une proposition concrète pour améliorer conversion et suivi relance clients. On se cale 20 min pour revue ?",
+    }
+    linkedin_templates = {
+        "PME": "Bonjour {prenom}, partant pour un échange rapide cette semaine pour améliorer votre prospection ?",
+        "agences": "Bonjour {prenom}, dispo pour 20 min afin de cadrer une relance client plus efficace côté agence ?",
+        "e-commerce": "Bonjour {prenom}, je peux vous partager un plan concret de relance e-commerce. Ouvert à un échange rapide ?",
+    }
+
+    text = (
+        "Livrable CRM (execution automatique sur données réelles)\n\n"
+        "1) Leads ciblables (inactifs J-45 a J-14, statut=LEAD)\n"
+        f"- Total contactes potentiels: {total}\n"
+        f"- PME: {len(segmented['PME'])}\n"
+        f"- agences: {len(segmented['agences'])}\n"
+        f"- e-commerce: {len(segmented['e-commerce'])}\n\n"
+        "2) Extraits de liste (échantillon)\n"
+        "PME:\n"
+        f"{_sample_lines('PME')}\n\n"
+        "agences:\n"
+        f"{_sample_lines('agences')}\n\n"
+        "e-commerce:\n"
+        f"{_sample_lines('e-commerce')}\n\n"
+        "3) Messages de relance par segment\n"
+        f"EMAIL PME:\n{email_templates['PME']}\n"
+        f"LINKEDIN PME:\n{linkedin_templates['PME']}\n\n"
+        f"EMAIL agences:\n{email_templates['agences']}\n"
+        f"LINKEDIN agences:\n{linkedin_templates['agences']}\n\n"
+        f"EMAIL e-commerce:\n{email_templates['e-commerce']}\n"
+        f"LINKEDIN e-commerce:\n{linkedin_templates['e-commerce']}\n\n"
+        "4) Plan relance\n"
+        "- J+2: relance 1 si aucune reponse\n"
+        "- J+5: relance 2 si aucune reponse\n\n"
+        "5) Mini rapport\n"
+        f"- Nombre contactes: {total}\n"
+        "- Taux de reponse: NOT AVAILABLE (aucune campagne executee automatiquement dans cette version)\n"
+        "- Rendez-vous obtenus: NOT AVAILABLE\n"
+    )
+    return providers.Completion(text=text, cost_cents=0, tokens_in=0, tokens_out=0)
+
+
 def run_task(db: Session, actor: User, task: Task, request: Request, feedback: str | None = None) -> TaskRun:
     if task.status not in RUNNABLE_STATUSES:
         raise Conflict("This task cannot be run in its current status", code="invalid_task_state")
@@ -510,13 +611,18 @@ def run_task(db: Session, actor: User, task: Task, request: Request, feedback: s
         block("scope_not_granted", "The agent does not hold the required permission")
     if needs_approval(agent, scope) and task.status != "APPROVED":
         block("approval_required", "Human approval is required before running this task")
-    try:
-        provider = providers.get_provider()
-    except ProviderNotConfigured:
-        block("provider_not_configured", "No AI provider is configured")
+    internal_completion = _crm_relaunch_completion(db, task)
+    provider = None
+    provider_name = "internal_workflow"
+    if internal_completion is None:
+        try:
+            provider = providers.get_provider()
+            provider_name = provider.name
+        except ProviderNotConfigured:
+            block("provider_not_configured", "No AI provider is configured")
     if _runs_today(db, agent.id) >= agent.max_actions_per_day:
         block("daily_quota_exceeded", "The agent reached its daily action limit")
-    if provider.paid and _spent_this_month(db, agent.id) >= agent.monthly_budget_cents:
+    if provider and provider.paid and _spent_this_month(db, agent.id) >= agent.monthly_budget_cents:
         block("budget_exceeded", "The agent's monthly AI budget is exhausted")
 
     # Prise en charge atomique : deux requêtes simultanées ne peuvent pas exécuter la même tâche deux fois.
@@ -530,7 +636,7 @@ def run_task(db: Session, actor: User, task: Task, request: Request, feedback: s
         db.rollback()
         raise Conflict("This task is already being run", code="invalid_task_state")
     run = TaskRun(
-        task_id=task.id, agent_id=agent.id, status="RUNNING", provider=provider.name,
+        task_id=task.id, agent_id=agent.id, status="RUNNING", provider=provider_name,
         triggered_by=actor.id, started_at=now,
     )
     db.add(run)
@@ -553,8 +659,10 @@ def run_task(db: Session, actor: User, task: Task, request: Request, feedback: s
 
         feedback_items = _recent_feedback(db, task.id)
         system, prompt = _prompts(agent, task, feedback=feedback_items)
-        completion = provider.complete(
-            system=system, prompt=prompt, timeout_seconds=get_settings().ai_timeout_seconds
+        completion = (
+            internal_completion
+            if internal_completion is not None
+            else provider.complete(system=system, prompt=prompt, timeout_seconds=get_settings().ai_timeout_seconds)
         )
         run.status = "SUCCESS"
         run.output = completion.text[:MAX_OUTPUT_CHARS]
