@@ -25,6 +25,19 @@ DOCKER="sudo docker" ./scripts/seed-business-agents.sh
 
 Le script est idempotent : il crée les agents manquants et met à jour ceux qui existent deja
 (missions, permissions, outils, limites et budgets).
+
+## Nommer un General Manager AI Agent
+
+Depuis le VPS :
+
+```bash
+cd /opt/persomy-v2
+git pull --ff-only
+DOCKER="sudo docker" ./scripts/set-general-manager-agent.sh
+```
+
+Le script crée ou met à jour un agent nommé `General Manager AI Agent` avec une mission
+de définition des missions et dispatching des tâches, puis l'active dans la plateforme.
 ## Sauvegarde
 
 ```bash
