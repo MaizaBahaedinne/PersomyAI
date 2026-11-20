@@ -581,6 +581,8 @@ export const fr = {
   "task.action.reopen": "Rouvrir",
   "tasks.confirm_request": "Demander la validation humaine de « {name} » ?",
   "tasks.confirm_run": "Lancer l'exécution de « {name} » par {agent} ?",
+  "tasks.run_feedback_label": "Critique / consignes de révision (facultatif)",
+  "tasks.run_feedback_placeholder": "Ex: trop générique, cible PME seulement, ton plus direct, ajoute 3 objets d'email concrets...",
   "tasks.confirm_cancel": "Annuler la tâche « {name} » ?",
   "tasks.confirm_reopen": "Rouvrir la tâche ? Toute validation précédente sera effacée.",
   "tasks.approve_comment": "Commentaire (facultatif)",

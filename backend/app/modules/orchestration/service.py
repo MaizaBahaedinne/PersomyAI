@@ -14,6 +14,7 @@ from app.modules.agents import service as agents_service
 from app.modules.agents.catalog import SCOPES
 from app.modules.agents.models import Agent
 from app.modules.audit import service as audit
+from app.modules.audit.models import AuditEvent
 from app.modules.orchestration import providers
 from app.modules.orchestration.catalog import (
     CANCELLABLE_STATUSES,
@@ -442,7 +443,23 @@ def _spent_this_month(db: Session, agent_id: uuid.UUID) -> int:
     ) or 0
 
 
-def _prompts(agent: Agent, task: Task) -> tuple[str, str]:
+def _recent_feedback(db: Session, task_id: uuid.UUID, limit: int = 3) -> list[str]:
+    rows = db.scalars(
+        select(AuditEvent)
+        .where(AuditEvent.target_type == "task", AuditEvent.target_id == str(task_id), AuditEvent.action == "task.feedback")
+        .order_by(AuditEvent.created_at.desc())
+        .limit(limit)
+    ).all()
+    out: list[str] = []
+    for row in rows:
+        details = row.details if isinstance(row.details, dict) else {}
+        text = str(details.get("feedback") or "").strip()
+        if text:
+            out.append(text)
+    return list(reversed(out))
+
+
+def _prompts(agent: Agent, task: Task, feedback: list[str] | None = None) -> tuple[str, str]:
     system = f"You are {agent.name}, {agent.role}."
     if agent.mission.strip():
         system += f" Your mission: {agent.mission.strip()}"
@@ -454,10 +471,17 @@ def _prompts(agent: Agent, task: Task) -> tuple[str, str]:
         " explicitly asked in the task."
     )
     prompt = task.title if not task.description else f"{task.title}\n\n{task.description}"
+    if feedback:
+        feedback_block = "\n".join(f"- {item}" for item in feedback)
+        prompt += (
+            "\n\nUser critique to address in this revision:\n"
+            f"{feedback_block}\n"
+            "Return a revised final deliverable that explicitly incorporates this feedback."
+        )
     return system, prompt
 
 
-def run_task(db: Session, actor: User, task: Task, request: Request) -> TaskRun:
+def run_task(db: Session, actor: User, task: Task, request: Request, feedback: str | None = None) -> TaskRun:
     if task.status not in RUNNABLE_STATUSES:
         raise Conflict("This task cannot be run in its current status", code="invalid_task_state")
 
@@ -505,7 +529,21 @@ def run_task(db: Session, actor: User, task: Task, request: Request) -> TaskRun:
     db.commit()
     db.refresh(task)
 
-    system, prompt = _prompts(agent, task)
+    feedback_text = (feedback or "").strip()
+    if feedback_text:
+        audit.record(
+            db,
+            "task.feedback",
+            request=request,
+            actor=actor,
+            target_type="task",
+            target_id=task.id,
+            details={"feedback": feedback_text[:2000]},
+        )
+        db.commit()
+
+    feedback_items = _recent_feedback(db, task.id)
+    system, prompt = _prompts(agent, task, feedback=feedback_items)
     try:
         completion = provider.complete(
             system=system, prompt=prompt, timeout_seconds=get_settings().ai_timeout_seconds

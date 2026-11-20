@@ -84,6 +84,10 @@ class Rejection(BaseModel):
     reason: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
 
 
+class RunInput(BaseModel):
+    feedback: Annotated[Optional[str], StringConstraints(strip_whitespace=True, max_length=2000)] = None
+
+
 class TaskSummary(BaseModel):
     id: uuid.UUID
     title: str

@@ -583,6 +583,8 @@ export const en: Record<MessageKey, string> = {
   "task.action.reopen": "Reopen",
   "tasks.confirm_request": "Request human approval for \"{name}\"?",
   "tasks.confirm_run": "Run \"{name}\" with {agent}?",
+  "tasks.run_feedback_label": "Critique / revision guidance (optional)",
+  "tasks.run_feedback_placeholder": "Ex: too generic, target SMEs only, more direct tone, add 3 concrete email subjects...",
   "tasks.confirm_cancel": "Cancel task \"{name}\"?",
   "tasks.confirm_reopen": "Reopen the task? Any previous approval will be cleared.",
   "tasks.approve_comment": "Comment (optional)",

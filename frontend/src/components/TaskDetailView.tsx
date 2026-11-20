@@ -90,12 +90,16 @@ export function TaskDetailView({ id }: { id: string }) {
 
   const post = (action: string, body?: unknown) => api(`/tasks/${id}/${action}`, { method: "POST", body });
 
-  const doRun = async () => {
+  const doRun = async (feedback?: string) => {
     setBusy(true);
     setActionError(null);
     try {
-      const result = await api<{ task: Task; run: TaskRun }>(`/tasks/${id}/run`, { method: "POST" });
+      const result = await api<{ task: Task; run: TaskRun }>(`/tasks/${id}/run`, {
+        method: "POST",
+        body: feedback?.trim() ? { feedback: feedback.trim() } : {},
+      });
       setDialog(null);
+      setText("");
       setNotice(
         result.run.status === "SUCCESS"
           ? t("tasks.n_run_done")
@@ -270,12 +274,14 @@ export function TaskDetailView({ id }: { id: string }) {
         )}
       </section>
 
-      {(dialog === "approve" || dialog === "reject") && (
+      {(dialog === "approve" || dialog === "reject" || dialog === "run") && (
         <Modal title={label("task.action", dialog)} onClose={closeDialog}>
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (dialog === "approve") {
+              if (dialog === "run") {
+                void doRun(text);
+              } else if (dialog === "approve") {
                 void act(() => post("approve", text.trim() ? { comment: text.trim() } : {}), t("tasks.n_approved"));
               } else {
                 void act(() => post("reject", { reason: text.trim() }), t("tasks.n_rejected"));
@@ -285,16 +291,21 @@ export function TaskDetailView({ id }: { id: string }) {
           >
             <div>
               <label htmlFor="decision-text" className="label">
-                {dialog === "approve" ? t("tasks.approve_comment") : t("tasks.reject_reason")}
+                {dialog === "run"
+                  ? t("tasks.run_feedback_label")
+                  : dialog === "approve"
+                    ? t("tasks.approve_comment")
+                    : t("tasks.reject_reason")}
               </label>
               <textarea
                 id="decision-text"
                 rows={3}
-                maxLength={500}
+                maxLength={dialog === "run" ? 2000 : 500}
                 required={dialog === "reject"}
                 className="input"
                 value={text}
                 onChange={(e) => setText(e.target.value)}
+                placeholder={dialog === "run" ? t("tasks.run_feedback_placeholder") : undefined}
               />
             </div>
             {actionError && <ErrorBanner message={actionError} />}
@@ -312,16 +323,14 @@ export function TaskDetailView({ id }: { id: string }) {
         </Modal>
       )}
 
-      {(dialog === "request" || dialog === "run" || dialog === "cancel" || dialog === "reopen") && (
+      {(dialog === "request" || dialog === "cancel" || dialog === "reopen") && (
         <div>
           <ConfirmDialog
             title={label("task.action", dialog === "request" ? "request_approval" : dialog)}
             message={
               dialog === "request"
                 ? t("tasks.confirm_request", { name: task.title })
-                : dialog === "run"
-                  ? t("tasks.confirm_run", { name: task.title, agent: task.agent_name ?? "—" })
-                  : dialog === "cancel"
+                : dialog === "cancel"
                     ? t("tasks.confirm_cancel", { name: task.title })
                     : t("tasks.confirm_reopen")
             }
@@ -329,8 +338,7 @@ export function TaskDetailView({ id }: { id: string }) {
             busy={busy}
             onCancel={closeDialog}
             onConfirm={() => {
-              if (dialog === "run") void doRun();
-              else if (dialog === "request") void act(() => post("request-approval"), t("tasks.n_requested"));
+              if (dialog === "request") void act(() => post("request-approval"), t("tasks.n_requested"));
               else if (dialog === "cancel") void act(() => post("cancel"), t("tasks.n_cancelled"));
               else void act(() => post("reopen"), t("tasks.n_reopened"));
             }}

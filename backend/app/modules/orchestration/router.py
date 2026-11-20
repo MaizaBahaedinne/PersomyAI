@@ -17,6 +17,7 @@ from app.modules.orchestration.schemas import (
     MissionUpdate,
     ProviderInfo,
     Rejection,
+    RunInput,
     RunResult,
     TaskCreate,
     TaskOut,
@@ -158,9 +159,15 @@ def reopen_task(task_id: uuid.UUID, request: Request, ctx: AuthContext = Write, 
 
 
 @tasks_router.post("/{task_id}/run", response_model=RunResult)
-def run_task(task_id: uuid.UUID, request: Request, ctx: AuthContext = Run, db: Session = Depends(get_db)):
+def run_task(
+    task_id: uuid.UUID,
+    request: Request,
+    payload: RunInput | None = None,
+    ctx: AuthContext = Run,
+    db: Session = Depends(get_db),
+):
     task = service.get_task(db, task_id)
-    run = service.run_task(db, ctx.user, task, request)
+    run = service.run_task(db, ctx.user, task, request, feedback=(payload.feedback if payload else None))
     return RunResult(task=service.task_to_out(db, task), run=TaskRunOut.model_validate(run))
 
 
