@@ -529,37 +529,36 @@ def run_task(db: Session, actor: User, task: Task, request: Request, feedback: s
     db.commit()
     db.refresh(task)
 
-    feedback_text = (feedback or "").strip()
-    if feedback_text:
-        audit.record(
-            db,
-            "task.feedback",
-            request=request,
-            actor=actor,
-            target_type="task",
-            target_id=task.id,
-            details={"feedback": feedback_text[:2000]},
-        )
-        db.commit()
-
-    feedback_items = _recent_feedback(db, task.id)
-    system, prompt = _prompts(agent, task, feedback=feedback_items)
     try:
+        feedback_text = (feedback or "").strip()
+        if feedback_text:
+            audit.record(
+                db,
+                "task.feedback",
+                request=request,
+                actor=actor,
+                target_type="task",
+                target_id=task.id,
+                details={"feedback": feedback_text[:2000]},
+            )
+            db.commit()
+
+        feedback_items = _recent_feedback(db, task.id)
+        system, prompt = _prompts(agent, task, feedback=feedback_items)
         completion = provider.complete(
             system=system, prompt=prompt, timeout_seconds=get_settings().ai_timeout_seconds
         )
-    except ProviderError as exc:
-        logger.warning("provider error task=%s code=%s", task.id, exc.code)
-        run.status, run.error_code = "FAILED", exc.code
-    except Exception:  # un fournisseur défaillant ne doit jamais laisser la tâche bloquée
-        logger.exception("provider crashed task=%s", task.id)
-        run.status, run.error_code = "FAILED", "provider_error"
-    else:
         run.status = "SUCCESS"
         run.output = completion.text[:MAX_OUTPUT_CHARS]
         run.cost_cents = max(0, completion.cost_cents)
         run.tokens_in = max(0, completion.tokens_in)
         run.tokens_out = max(0, completion.tokens_out)
+    except ProviderError as exc:
+        logger.warning("provider error task=%s code=%s", task.id, exc.code)
+        run.status, run.error_code = "FAILED", exc.code
+    except Exception:  # sécurité: aucune erreur interne ne doit laisser la tâche bloquée en RUNNING
+        logger.exception("run pipeline crashed task=%s", task.id)
+        run.status, run.error_code = "FAILED", "provider_error"
     run.finished_at = utcnow()
     task.status = "DONE" if run.status == "SUCCESS" else "FAILED"
     audit.record(
