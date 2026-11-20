@@ -5,7 +5,7 @@ import { api } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { errorKey, formatDateTime } from "@/lib/errors";
 import { useAsync } from "@/lib/useAsync";
-import type { AppSettings, DashboardSummary, Language, SessionInfo } from "@/lib/types";
+import type { AppSettings, DashboardSummary, Language, ProviderInfo, SessionInfo } from "@/lib/types";
 import { useI18n } from "@/i18n";
 import { Badge, EmptyState, ErrorBanner, PageHeader, Spinner, SuccessBanner } from "@/components/ui";
 
@@ -37,14 +37,34 @@ export function SettingsView() {
         {tab === "security" && <SecurityTab />}
         {tab === "general" && <GeneralTab />}
         {tab === "services" && <ServicesTab />}
-        {tab === "ai" && (
-          <div className="card max-w-xl space-y-3">
-            <h2 className="text-lg font-semibold text-white">{t("settings.ai.title")}</h2>
-            <Badge tone="info">{t("dashboard.module_pending")}</Badge>
-            <p className="text-sm text-slate-300">{t("settings.ai.pending")}</p>
-          </div>
-        )}
+        {tab === "ai" && <AiTab />}
       </div>
+    </div>
+  );
+}
+
+function AiTab() {
+  const { t } = useI18n();
+  const provider = useAsync(() => api<ProviderInfo>("/tasks/provider"), []);
+
+  return (
+    <div className="card max-w-xl space-y-3">
+      <h2 className="text-lg font-semibold text-white">{t("settings.ai.title")}</h2>
+      {provider.loading && !provider.data ? (
+        <Spinner />
+      ) : provider.error || !provider.data ? (
+        <ErrorBanner message={t("common.error")} onRetry={provider.reload} />
+      ) : provider.data.configured ? (
+        <>
+          <Badge tone="ok">{t("common.confirm")}</Badge>
+          <p className="text-sm text-slate-300">{t("tasks.provider_ready", { name: provider.data.name })}</p>
+        </>
+      ) : (
+        <>
+          <Badge tone="info">{t("dashboard.module_pending")}</Badge>
+          <p className="text-sm text-slate-300">{t("tasks.provider_missing")}</p>
+        </>
+      )}
     </div>
   );
 }
