@@ -60,6 +60,18 @@ Le script :
 - redémarre `backend` ;
 - vérifie la connectivité backend -> ollama et l'état provider Persomy AI.
 
+Benchmark modèles (latence/tokens) :
+
+```bash
+DOCKER="sudo docker" ./scripts/benchmark-ollama-models.sh
+```
+
+Avec modèles personnalisés :
+
+```bash
+DOCKER="sudo docker" ./scripts/benchmark-ollama-models.sh qwen2.5:3b-instruct qwen2.5:7b-instruct llama3.1:8b
+```
+
 ## Pièges rencontrés lors du premier déploiement
 
 - **`docker-entrypoint.sh: Permission denied`** (backend en boucle de redémarrage) : cause probable, un `umask 077` lors du `git clone` qui retire le bit exécutable ou la lecture. Cloner avec `umask 022`, ou corriger : `chmod +x backend/docker-entrypoint.sh` puis reconstruire l'image.

@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# Benchmark rapide de modèles Ollama pour Persomy AI (latence + tokens), côté VPS.
+# Usage:
+#   DOCKER="sudo docker" ./scripts/benchmark-ollama-models.sh
+#   DOCKER="sudo docker" ./scripts/benchmark-ollama-models.sh qwen2.5:3b-instruct qwen2.5:7b-instruct
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+
+[ -f .env ] || { echo "Fichier .env introuvable (copier .env.example)" >&2; exit 1; }
+
+set -a
+. ./.env
+set +a
+
+DOCKER_CMD="${DOCKER:-docker}"
+BASE_URL="${OLLAMA_BASE_URL:-http://ollama:11434}"
+PROMPT="Résume en 3 points concrets comment améliorer une prospection B2B cette semaine."
+SYSTEM="Tu es un assistant opérationnel orienté exécution business."
+RUNS=3
+
+if [ "$#" -gt 0 ]; then
+  MODELS=("$@")
+else
+  MODELS=(
+    "qwen2.5:3b-instruct"
+    "qwen2.5:7b-instruct"
+    "llama3.1:8b"
+  )
+fi
+
+echo "== Validation docker compose =="
+${DOCKER_CMD} compose config -q
+
+echo "== Démarrage des services ollama + backend =="
+${DOCKER_CMD} compose up -d ollama backend
+
+echo "== Benchmark (base_url=${BASE_URL}, runs=${RUNS}) =="
+printf "%-24s | %-14s | %-12s | %-12s | %s\n" "MODEL" "AVG_MS" "TOKENS_IN" "TOKENS_OUT" "SAMPLE"
+printf "%.0s-" {1..110}; echo
+
+for model in "${MODELS[@]}"; do
+  echo "[info] pull ${model}" >&2
+  ${DOCKER_CMD} compose exec -T ollama ollama pull "${model}" >/dev/null
+
+  line="$(${DOCKER_CMD} compose exec -T backend python -c "
+import json, time, urllib.request
+base='${BASE_URL}'.rstrip('/')
+model='${model}'
+runs=${RUNS}
+system='''${SYSTEM}'''
+prompt='''${PROMPT}'''
+
+ms=[]
+tin=[]
+tout=[]
+sample=''
+for i in range(runs):
+    payload={
+        'model': model,
+        'system': system,
+        'prompt': prompt,
+        'stream': False,
+    }
+    req=urllib.request.Request(
+        f'{base}/api/generate',
+        data=json.dumps(payload).encode('utf-8'),
+        headers={'Content-Type':'application/json'},
+        method='POST'
+    )
+    t0=time.perf_counter()
+    with urllib.request.urlopen(req, timeout=120) as r:
+        body=json.loads(r.read().decode('utf-8'))
+    dt=(time.perf_counter()-t0)*1000
+    ms.append(dt)
+    tin.append(int(body.get('prompt_eval_count') or 0))
+    tout.append(int(body.get('eval_count') or 0))
+    if not sample:
+        sample=(body.get('response') or '').strip().replace('\n',' ')[:70]
+
+avg_ms=round(sum(ms)/len(ms),1)
+avg_in=round(sum(tin)/len(tin),1)
+avg_out=round(sum(tout)/len(tout),1)
+print(f'{model}|{avg_ms}|{avg_in}|{avg_out}|{sample}')
+" 2>/dev/null || true)"
+
+  if [ -z "$line" ]; then
+    printf "%-24s | %-14s | %-12s | %-12s | %s\n" "$model" "ERROR" "-" "-" "Echec appel generate"
+    continue
+  fi
+
+  IFS='|' read -r m avg in out sample <<< "$line"
+  printf "%-24s | %-14s | %-12s | %-12s | %s\n" "$m" "$avg" "$in" "$out" "$sample"
+done
+
+echo
+cat <<EOF
+Conseil d'usage:
+- Prends le modèle avec le meilleur compromis AVG_MS / qualité perçue.
+- Pour l'appliquer dans Persomy AI:
+  1) Modifier OLLAMA_MODEL dans .env
+  2) ${DOCKER_CMD} compose up -d backend
+EOF
