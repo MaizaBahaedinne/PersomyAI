@@ -43,6 +43,9 @@ ${DOCKER_CMD} compose up -d ollama backend
 echo "== Préchargement du modèle: ${OLLAMA_MODEL} =="
 ${DOCKER_CMD} compose exec -T ollama ollama pull "${OLLAMA_MODEL}"
 
+echo "== Rebuild backend (prise en compte du provider Ollama) =="
+${DOCKER_CMD} compose build backend
+
 echo "== Redémarrage backend avec la config provider =="
 ${DOCKER_CMD} compose up -d backend
 

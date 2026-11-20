@@ -57,6 +57,7 @@ Le script :
 - force `AI_PROVIDER=ollama` dans `.env` ;
 - démarre le service `ollama` ;
 - télécharge le modèle ;
+- reconstruit l'image `backend` pour inclure le provider Ollama ;
 - redémarre `backend` ;
 - vérifie la connectivité backend -> ollama et l'état provider Persomy AI.
 
