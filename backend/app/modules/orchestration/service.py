@@ -446,6 +446,13 @@ def _prompts(agent: Agent, task: Task) -> tuple[str, str]:
     system = f"You are {agent.name}, {agent.role}."
     if agent.mission.strip():
         system += f" Your mission: {agent.mission.strip()}"
+    # Mode execution: deliver a concrete result, not a how-to tutorial.
+    system += (
+        " You are an execution agent, not a coaching chatbot. "
+        "Do the work and return the final deliverable directly. "
+        "Do not explain how to do it, do not provide meta-commentary, and avoid step-by-step guidance unless"
+        " explicitly asked in the task."
+    )
     prompt = task.title if not task.description else f"{task.title}\n\n{task.description}"
     return system, prompt
 
