@@ -58,6 +58,7 @@ class TwoFactorSetupIn(BaseModel):
 class TwoFactorSetupOut(BaseModel):
     secret: str
     otpauth_uri: str
+    qr_svg_data_uri: str
 
 
 class TwoFactorCodeIn(BaseModel):

@@ -3,6 +3,7 @@
 import base64
 import hashlib
 import hmac
+from io import BytesIO
 import secrets
 import struct
 import time
@@ -56,3 +57,15 @@ def provisioning_uri(secret: str, account: str) -> str:
         f"otpauth://totp/{label}?secret={secret}&issuer={quote(ISSUER, safe='')}"
         f"&algorithm=SHA1&digits={DIGITS}&period={STEP_SECONDS}"
     )
+
+
+def provisioning_qr_svg_data_uri(uri: str) -> str:
+    """Génère un QR SVG inline (data URI) pour éviter tout appel externe."""
+    import qrcode  # type: ignore[import-not-found]
+    from qrcode.image.svg import SvgPathImage  # type: ignore[import-not-found]
+
+    img = qrcode.make(uri, image_factory=SvgPathImage, box_size=6, border=2)
+    buff = BytesIO()
+    img.save(buff)
+    data = base64.b64encode(buff.getvalue()).decode("ascii")
+    return f"data:image/svg+xml;base64,{data}"

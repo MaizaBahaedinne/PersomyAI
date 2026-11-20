@@ -123,6 +123,7 @@ def test_setup_stores_encrypted_secret_without_enabling(admin, login, db):
     assert user.two_factor_secret_encrypted and body["secret"] not in user.two_factor_secret_encrypted
     assert crypto.decrypt_secret(user.two_factor_secret_encrypted) == body["secret"]
     assert body["otpauth_uri"].startswith("otpauth://totp/")
+    assert body["qr_svg_data_uri"].startswith("data:image/svg+xml;base64,")
 
 
 def test_enable_rejects_wrong_code_then_accepts_valid_one(admin, login, db):

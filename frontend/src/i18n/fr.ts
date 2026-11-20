@@ -315,6 +315,7 @@ export const fr = {
   "settings.security.2fa.secret_label": "Clé secrète (saisie manuelle dans l'application)",
   "settings.security.2fa.uri_label": "Adresse otpauth",
   "settings.security.2fa.setup_hint": "Ajoutez cette clé dans votre application d'authentification, puis saisissez le code affiché pour confirmer.",
+  "settings.security.2fa.qr_alt": "QR code de configuration 2FA",
   "settings.security.2fa.code": "Code à 6 chiffres",
   "settings.security.2fa.confirm": "Confirmer",
   "settings.security.2fa.disable": "Désactiver",

@@ -317,6 +317,7 @@ export const en: Record<MessageKey, string> = {
   "settings.security.2fa.secret_label": "Secret key (manual entry in the app)",
   "settings.security.2fa.uri_label": "otpauth address",
   "settings.security.2fa.setup_hint": "Add this key to your authenticator app, then enter the displayed code to confirm.",
+  "settings.security.2fa.qr_alt": "2FA setup QR code",
   "settings.security.2fa.code": "6-digit code",
   "settings.security.2fa.confirm": "Confirm",
   "settings.security.2fa.disable": "Disable",

@@ -201,7 +201,7 @@ function TwoFactorCard() {
   const [mode, setMode] = useState<TwoFactorMode>("idle");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
-  const [setup, setSetup] = useState<{ secret: string; otpauth_uri: string } | null>(null);
+  const [setup, setSetup] = useState<{ secret: string; otpauth_uri: string; qr_svg_data_uri: string } | null>(null);
   const [codes, setCodes] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -229,7 +229,12 @@ function TwoFactorCard() {
   const start = (e: FormEvent) => {
     e.preventDefault();
     void run(async () => {
-      setSetup(await api<{ secret: string; otpauth_uri: string }>("/auth/2fa/setup", { method: "POST", body: { password } }));
+      setSetup(
+        await api<{ secret: string; otpauth_uri: string; qr_svg_data_uri: string }>("/auth/2fa/setup", {
+          method: "POST",
+          body: { password },
+        }),
+      );
       setPassword("");
     });
   };
@@ -351,6 +356,9 @@ function TwoFactorCard() {
           {mode === "setup" && setup && (
             <form onSubmit={confirm} className="space-y-3">
               <p className="text-xs text-slate-400">{t("settings.security.2fa.setup_hint")}</p>
+              <div className="flex justify-center rounded border border-slate-700/60 bg-ink-800/60 p-3">
+                <img src={setup.qr_svg_data_uri} alt={t("settings.security.2fa.qr_alt")} className="h-40 w-40" />
+              </div>
               <div>
                 <p className="label">{t("settings.security.2fa.secret_label")}</p>
                 <code className="block break-all rounded bg-ink-800 px-3 py-2 text-sm text-white">{setup.secret}</code>

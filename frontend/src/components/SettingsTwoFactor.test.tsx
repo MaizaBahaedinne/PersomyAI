@@ -14,7 +14,13 @@ function route(url: string, init?: RequestInit) {
   if (url.endsWith("/auth/sessions")) return Promise.resolve(jsonResponse([]));
   if (url.endsWith("/auth/2fa") && method === "GET") return Promise.resolve(jsonResponse(state));
   if (url.endsWith("/auth/2fa/setup")) {
-    return Promise.resolve(jsonResponse({ secret: "JBSWY3DPEHPK3PXP", otpauth_uri: "otpauth://totp/Persomy:a?secret=JBSWY3DPEHPK3PXP" }));
+    return Promise.resolve(
+      jsonResponse({
+        secret: "JBSWY3DPEHPK3PXP",
+        otpauth_uri: "otpauth://totp/Persomy:a?secret=JBSWY3DPEHPK3PXP",
+        qr_svg_data_uri: "data:image/svg+xml;base64,PHN2Zy8+",
+      }),
+    );
   }
   if (url.endsWith("/auth/2fa/enable")) {
     state = { enabled: true, available: true, recovery_codes_left: 2 };
@@ -58,6 +64,7 @@ describe("SettingsView — 2FA", () => {
     fireEvent.change(screen.getByLabelText("Mot de passe actuel", { selector: "#tfa-pw" }), { target: { value: "pw-pw-pw-pw-12" } });
     fireEvent.click(screen.getByRole("button", { name: "Activer" }));
     expect(await screen.findByText("JBSWY3DPEHPK3PXP")).toBeInTheDocument();
+    expect(screen.getByRole("img", { name: "QR code de configuration 2FA" })).toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Code à 6 chiffres"), { target: { value: "123456" } });
     fireEvent.click(screen.getByRole("button", { name: "Confirmer" }));
     expect(await screen.findByText("aaaaa-bbbbb")).toBeInTheDocument();

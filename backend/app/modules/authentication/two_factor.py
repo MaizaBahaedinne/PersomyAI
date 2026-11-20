@@ -121,7 +121,7 @@ def status(db: Session, user: User) -> dict:
     }
 
 
-def begin_setup(db: Session, request: Request, user: User, password: str) -> tuple[str, str]:
+def begin_setup(db: Session, request: Request, user: User, password: str) -> tuple[str, str, str]:
     if user.two_factor_enabled:
         raise Conflict("Two-factor authentication is already enabled", code="two_factor_already_enabled")
     if not verify_password(user.password_hash, password):
@@ -135,7 +135,8 @@ def begin_setup(db: Session, request: Request, user: User, password: str) -> tup
     user.two_factor_last_step = None
     audit.record(db, "auth.2fa_setup", request=request, actor=user)
     db.commit()
-    return secret, totp.provisioning_uri(secret, user.email)
+    uri = totp.provisioning_uri(secret, user.email)
+    return secret, uri, totp.provisioning_qr_svg_data_uri(uri)
 
 
 def enable(db: Session, request: Request, user: User, current: AuthSession, code: str) -> list[str]:

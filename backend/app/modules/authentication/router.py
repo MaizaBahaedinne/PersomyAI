@@ -121,9 +121,9 @@ def two_factor_setup(
     ctx: AuthContext = Depends(get_auth_context),
     db: Session = Depends(get_db),
 ):
-    secret, uri = two_factor.begin_setup(db, request, ctx.user, payload.password)
+    secret, uri, qr = two_factor.begin_setup(db, request, ctx.user, payload.password)
     response.headers["Cache-Control"] = "no-store"
-    return TwoFactorSetupOut(secret=secret, otpauth_uri=uri)
+    return TwoFactorSetupOut(secret=secret, otpauth_uri=uri, qr_svg_data_uri=qr)
 
 
 @router.post("/2fa/enable", response_model=RecoveryCodesOut)
