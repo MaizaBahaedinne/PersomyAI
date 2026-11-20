@@ -12,6 +12,7 @@ from app.core.db import get_db
 from app.core.errors import register_error_handlers
 from app.core.logging import configure_logging
 from app.modules.agents.router import router as agents_router
+from app.modules.analytics.router import router as analytics_router
 from app.modules.audit.router import router as audit_router
 from app.modules.authentication.router import router as auth_router
 from app.modules.automations.router import router as automations_router
@@ -88,6 +89,7 @@ def create_app() -> FastAPI:
         audit_router,
         settings_router,
         dashboard_router,
+        analytics_router,
         departments_router,
         automations_router,
         crm_router,

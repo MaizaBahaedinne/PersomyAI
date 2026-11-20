@@ -20,7 +20,7 @@ Plateforme de pilotage d'une entreprise gérée par deux administrateurs humains
 | CRM | Développé et testé (entreprises et contacts ; API + UI) |
 | Finance | Développé et testé (lecture des coûts IA + simulation mensuelle ; API + UI) |
 | RH / Équipe | Développé et testé (annuaire équipe + indicateurs 2FA/actifs ; API + UI) |
-| Analytics | Non implémenté (page « en préparation », aucune donnée fictive) |
+| Analytics | Développé et testé (agrégats transverses réels ; API + UI) |
 | Authentification à deux facteurs (TOTP + codes de secours) | Développé et testé (SQLite, tests automatisés) ; non vérifié sur PostgreSQL ; facultative (non imposée) ; pas de QR code (saisie manuelle de la clé) ; exige `TWO_FACTOR_KEY` |
 | Déploiement VPS | Réalisé manuellement sur un VPS (migrations 0001 à 0003 appliquées) ; les évolutions suivantes (migration 0004, 2FA) sont à déployer avec validation humaine |
 

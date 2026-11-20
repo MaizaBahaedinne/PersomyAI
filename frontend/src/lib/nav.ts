@@ -19,7 +19,7 @@ export const MODULE_NAV: NavItem[] = [
   { href: "/crm", label: "nav.crm", permission: "crm:read" },
   { href: "/finance", label: "nav.finance", permission: "finance:read" },
   { href: "/team", label: "nav.team", permission: "team:read" },
-  { href: "/analytics", label: "nav.analytics", soon: true },
+  { href: "/analytics", label: "nav.analytics", permission: "analytics:read" },
 ];
 
 export const ADMIN_NAV: NavItem[] = [
