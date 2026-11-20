@@ -19,7 +19,9 @@ Ubuntu 24.04, Docker Engine + plugin Compose, ports 80/443 ouverts, DNS `app.per
 | `SESSION_ABSOLUTE_HOURS` / `SESSION_IDLE_MINUTES` | Durées de session | `12` / `120` |
 | `LOGIN_MAX_FAILURES_PER_ACCOUNT` / `_PER_IP` / `LOGIN_WINDOW_MINUTES` | Anti force brute | `5` / `20` / `15` |
 | `TWO_FACTOR_KEY` | Clé Fernet chiffrant les secrets 2FA ; sans elle la 2FA est indisponible. À sauvegarder hors du VPS | voir OPERATIONS.md |
-| `AI_PROVIDER` | Fournisseur IA (aucun n'est implémenté : laisser vide) | vide |
+| `AI_PROVIDER` | Fournisseur IA (`ollama` supporté en local) | `ollama` |
+| `OLLAMA_BASE_URL` | URL interne d'Ollama sur le réseau Docker | `http://ollama:11434` |
+| `OLLAMA_MODEL` | Modèle Ollama utilisé par Persomy AI | `qwen2.5:3b-instruct` |
 | `LOG_LEVEL` | Niveau de logs | `INFO` |
 | `BACKEND_INTERNAL_URL` | Cible interne du proxy Next.js (fixée au build) | `http://backend:8000` |
 
@@ -36,6 +38,27 @@ Ubuntu 24.04, Docker Engine + plugin Compose, ports 80/443 ouverts, DNS `app.per
 7. Vérifier : `https://api.persomy.com/health/ready`, connexion sur `https://app.persomy.com`.
 
 Si le Caddy existant sert déjà d'autres sites, ne pas le remplacer : ajouter uniquement les blocs de `Caddyfile` à la configuration existante.
+
+## Activation rapide d'Ollama (0€ côté fournisseur)
+
+Script prêt à l'emploi :
+
+```bash
+DOCKER="sudo docker" ./scripts/setup-ollama-persomy.sh
+```
+
+Option : choisir un modèle au lancement.
+
+```bash
+DOCKER="sudo docker" ./scripts/setup-ollama-persomy.sh qwen2.5:7b-instruct
+```
+
+Le script :
+- force `AI_PROVIDER=ollama` dans `.env` ;
+- démarre le service `ollama` ;
+- télécharge le modèle ;
+- redémarre `backend` ;
+- vérifie la connectivité backend -> ollama et l'état provider Persomy AI.
 
 ## Pièges rencontrés lors du premier déploiement
 

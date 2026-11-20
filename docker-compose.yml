@@ -43,11 +43,22 @@ services:
       LOGIN_MAX_FAILURES_PER_IP: ${LOGIN_MAX_FAILURES_PER_IP:-20}
       LOGIN_WINDOW_MINUTES: ${LOGIN_WINDOW_MINUTES:-15}
       AI_PROVIDER: ${AI_PROVIDER:-}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:3b-instruct}
       TWO_FACTOR_KEY: ${TWO_FACTOR_KEY:-}
       AI_TIMEOUT_SECONDS: ${AI_TIMEOUT_SECONDS:-60}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
     expose:
       - "8000"
+    networks: [internal]
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama_data:/root/.ollama
+    expose:
+      - "11434"
     networks: [internal]
 
   frontend:
@@ -81,6 +92,7 @@ services:
 
 volumes:
   pgdata:
+  ollama_data:
   caddy_data:
   caddy_config:
 

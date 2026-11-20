@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     # Aucun fournisseur IA par défaut : tant qu'il est vide, aucun appel IA n'est possible.
     ai_provider: str = ""
     ai_timeout_seconds: int = 60
+    ollama_base_url: str = "http://ollama:11434"
+    ollama_model: str = "qwen2.5:3b-instruct"
 
     @field_validator("trusted_origins", mode="before")
     @classmethod
