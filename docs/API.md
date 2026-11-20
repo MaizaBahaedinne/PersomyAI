@@ -89,6 +89,15 @@ Préfixe `/api/v1/crm`.
 
 Codes d'erreur principaux : `company_not_found`, `company_name_taken`, `contact_not_found`.
 
+## Finance
+
+Préfixe `/api/v1/finance`.
+
+| Méthode | Route | Permission | Description |
+| --- | --- | --- | --- |
+| GET | `/finance/summary` | `finance:read` | Coûts IA réels (total, 30 jours, moyenne par run) |
+| POST | `/finance/simulate` | `finance:simulate` | Simulation mensuelle (`revenue`, marge, coût IA, croissance) |
+
 ## Missions et tâches (orchestrateur)
 
 Préfixes `/api/v1/missions` et `/api/v1/tasks`. Les routes statiques (`/tasks/provider`) sont déclarées avant `/{id}`.
@@ -129,6 +138,6 @@ Contrôles de `POST /tasks/{id}/run`, dans cet ordre (chaque refus est audité `
 | Rôle | Permissions |
 | --- | --- |
 | SUPER_ADMIN | toutes |
-| ADMIN | dashboard, users (lecture/écriture limitée aux rôles non privilégiés), audit, settings (lecture), révocation de sessions, agents (lecture/écriture, arrêt d'urgence), orchestration (lecture, écriture, validation, exécution), automatisations (lecture/écriture), CRM (lecture/écriture) |
-| OPERATOR | dashboard, users (lecture), settings (lecture), agents (lecture), orchestration (lecture), automatisations (lecture), CRM (lecture) |
+| ADMIN | dashboard, users (lecture/écriture limitée aux rôles non privilégiés), audit, settings (lecture), révocation de sessions, agents (lecture/écriture, arrêt d'urgence), orchestration (lecture, écriture, validation, exécution), automatisations (lecture/écriture), CRM (lecture/écriture), finance (lecture/simulation) |
+| OPERATOR | dashboard, users (lecture), settings (lecture), agents (lecture), orchestration (lecture), automatisations (lecture), CRM (lecture), finance (lecture/simulation) |
 | VIEWER | dashboard |

@@ -18,6 +18,7 @@ from app.modules.automations.router import router as automations_router
 from app.modules.crm.router import router as crm_router
 from app.modules.dashboard.router import router as dashboard_router
 from app.modules.departments.router import router as departments_router
+from app.modules.finance.router import router as finance_router
 from app.modules.orchestration.router import missions_router, tasks_router
 from app.modules.settings.router import router as settings_router
 from app.modules.users.router import router as users_router
@@ -89,6 +90,7 @@ def create_app() -> FastAPI:
         departments_router,
         automations_router,
         crm_router,
+        finance_router,
         agents_router,
         missions_router,
         tasks_router,

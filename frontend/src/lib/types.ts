@@ -266,3 +266,17 @@ export interface CrmContact {
   created_at: string;
   updated_at: string;
 }
+
+export interface FinanceSummary {
+  task_runs_total: number;
+  cost_cents_total: number;
+  cost_cents_30d: number;
+  average_cost_cents: number;
+}
+
+export interface FinanceSimulation {
+  projected_revenue_cents: number;
+  projected_margin_cents: number;
+  margin_after_ai_cents: number;
+  ai_cost_share_percent: number;
+}

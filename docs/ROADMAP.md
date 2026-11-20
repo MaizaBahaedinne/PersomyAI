@@ -10,7 +10,7 @@ Légende : TERMINÉ ET TESTÉ · DÉVELOPPÉ MAIS NON TESTÉ · PARTIELLEMENT IM
 | 3 — Agents IA | Agents, identités techniques, permissions, outils, historique, arrêt d'urgence, compteurs réels au tableau de bord | TERMINÉ ET TESTÉ (gestion uniquement ; aucune exécution de tâche ni appel IA ; SQLite, PostgreSQL non vérifié) |
 | 4 — Orchestrateur | Missions, tâches, validation humaine (quatre yeux pour les permissions critiques), quotas, budget, arrêt d'urgence, interface `Provider` IA, historique d'exécution | PARTIELLEMENT IMPLÉMENTÉ : gestion, validation et garde-fous développés et testés (SQLite) ; aucun fournisseur IA réel, donc aucune exécution effective ; PostgreSQL non vérifié |
 | 5 — Automatisations | Workflows, déclencheurs, anti-boucle | PARTIELLEMENT IMPLÉMENTÉ : configuration CRUD, statuts, simulation de déclenchement et garde-fou anti-boucle développés et testés (SQLite) ; exécution métier réelle non branchée |
-| 6 — Départements | CRM, finance (lecture/simulation), RH | PARTIELLEMENT IMPLÉMENTÉ : synthèse des agents par département + socle CRM (entreprises/contacts) ; finance/RH non implémentés |
+| 6 — Départements | CRM, finance (lecture/simulation), RH | PARTIELLEMENT IMPLÉMENTÉ : synthèse des agents par département + CRM (entreprises/contacts) + finance (lecture/simulation) ; RH non implémenté |
 | 7 — Analytics | Indicateurs et rapports calculés sur données réelles | NON IMPLÉMENTÉ |
 | 8 — Finalisation | Audit sécurité complet, tests Docker/PostgreSQL, optimisation | PARTIELLEMENT IMPLÉMENTÉ (scripts et docs prêts ; rien exécuté sur Docker/VPS) |
 
